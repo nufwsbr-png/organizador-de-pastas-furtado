@@ -1,0 +1,41 @@
+{
+  "name": "organizador-de-pastas-furtado",
+  "productName": "Organizador de Pastas Furtado",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Organiza as pastas de clientes do escritório Furtado: transcreve a entrevista, preenche o questionário e arruma os documentos.",
+  "author": "Furtado",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "dist": "electron-vite build && electron-builder --win"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^1.0.11",
+    "dotenv": "^18.0.8",
+    "electron-updater": "^6.8.9",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.4.299",
+    "pdfkit": "^0.20.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/pdfkit": "^0.17.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "electron": "^44.7.2",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^6.0.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
+  }
+}

@@ -1,0 +1,26 @@
+appId: br.com.furtado.organizador
+productName: Organizador de Pastas Furtado
+directories:
+  output: release
+files:
+  - out/**
+  - package.json
+asarUnpack:
+  - "**/node_modules/@napi-rs/canvas/**"
+  - "**/node_modules/pdfkit/**"
+  - "**/node_modules/pdfjs-dist/**"
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: Organizador-de-Pastas-Furtado-Setup-${version}.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  language: 1046
+publish:
+  provider: github
+  owner: nufwsbr-png
+  repo: organizador-de-pastas-furtado
+  releaseType: release
