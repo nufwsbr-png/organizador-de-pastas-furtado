@@ -6,10 +6,10 @@ function criarJanela(): void {
     width: 1100,
     height: 760,
     title: 'Organizador de Pastas Furtado',
-    webPreferences: { preload: join(__dirname, '../preload/index.js'), sandbox: false },
+    webPreferences: { preload: join(import.meta.dirname, '../preload/index.mjs'), sandbox: false },
   });
   if (process.env.ELECTRON_RENDERER_URL) void win.loadURL(process.env.ELECTRON_RENDERER_URL);
-  else void win.loadFile(join(__dirname, '../renderer/index.html'));
+  else void win.loadFile(join(import.meta.dirname, '../renderer/index.html'));
 }
 
 void app.whenReady().then(criarJanela);
