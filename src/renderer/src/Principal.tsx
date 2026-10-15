@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import simbolo from './assets/simbolo.svg';
 import { api, type EstadoApp, type Job } from './api';
 
 interface Props {
@@ -59,7 +60,7 @@ export function Principal({ estado, aoAjustes, aoTrocarLogin }: Props) {
     <div className="tela-principal">
       <header className="barra">
         <div className="marca">
-          <img src="/simbolo.svg" alt="" />
+          <img src={simbolo} alt="" />
           <div>
             <h1>Organizador de Pastas Furtado</h1>
             <span className="sub">

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import simbolo from './assets/simbolo.svg';
 import { api, type IdProvedor, type StatusProvedor } from './api';
 
 interface Props {
@@ -37,7 +38,7 @@ export function Login({ aoEntrar, provedorAtual }: Props) {
   return (
     <div className="tela-login">
       <div className="marca">
-        <img src="/simbolo.svg" alt="" />
+        <img src={simbolo} alt="" />
         <span className="marca-nome">
           NuFws<small>Soluções IA</small>
         </span>

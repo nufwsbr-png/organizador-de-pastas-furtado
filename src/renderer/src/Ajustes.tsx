@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import simbolo from './assets/simbolo.svg';
 import { api, type EstadoApp } from './api';
 
 interface Props {
@@ -39,7 +40,7 @@ export function Ajustes({ estado, aoVoltar, aoMudar }: Props) {
     <div className="tela-ajustes">
       <header className="barra">
         <div className="marca">
-          <img src="/simbolo.svg" alt="" />
+          <img src={simbolo} alt="" />
           <h1>Ajustes</h1>
         </div>
         <button onClick={aoVoltar}>← Voltar</button>

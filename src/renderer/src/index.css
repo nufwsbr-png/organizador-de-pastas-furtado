@@ -1,6 +1,6 @@
 /* Identidade visual NuFws v1.1 (Desktop/ID Visual): fundo Preto Noite, ciano como único destaque,
    degradê em um ponto por tela, Outfit nos títulos e DM Sans no resto. */
-@import url('/fonts/fontes.css');
+@import './fonts/fontes.css';
 
 :root {
   --preto: #05080e;

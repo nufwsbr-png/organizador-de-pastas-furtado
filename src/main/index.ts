@@ -22,6 +22,7 @@ import { candidatosPadrao, localizarExecutavel } from './provedores/localizar';
 import { matarProcessos } from './provedores/processo';
 import type { IdProvedor, Provedor, StatusProvedor } from './provedores/tipos';
 
+if (process.env.ORGANIZADOR_DADOS) app.setPath('userData', process.env.ORGANIZADOR_DADOS);
 const userData = app.getPath('userData');
 mkdirSync(userData, { recursive: true });
 const arquivoLog = join(userData, 'log.txt');
