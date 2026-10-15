@@ -20,3 +20,11 @@ npm test           # testes (vitest)
 npm run dist       # gera o instalador em release/
 ```
 Copie `.env.example` para `.env` e preencha `ELEVENLABS_API_KEY`.
+
+## Visual
+Identidade NuFws (pasta `Desktop/ID Visual`, manual v1.1): fundo Preto Noite, ciano como destaque, uma palavra em degradê por tela, fontes Outfit e DM Sans embutidas (funcionam sem internet).
+
+## Para desenvolvedores
+- `npx electron-vite build` e depois `electron . --captura=tela.png` renderiza a janela escondida e salva a imagem (sem abrir janela). Com `ORGANIZADOR_DADOS=<pasta>` o app usa outra pasta de dados (útil para ver a tela de login).
+- Testes reais (usam a assinatura): `TESTE_REAL=1 npx vitest run test/real`.
+- O app grava `log.txt`, `jobs.json`, `settings.json` e `.env` em `%APPDATA%\Organizador de Pastas Furtado`.
