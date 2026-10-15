@@ -20,7 +20,7 @@ export class Atualizador {
     private emitir: (estado: EstadoAtualizacao) => void,
     private log: (texto: string) => void = () => {},
   ) {
-    autoUpdater.autoDownload = false;
+    autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = true;
     autoUpdater.on('checking-for-update', () => this.mudar({ estado: 'verificando' }));
     autoUpdater.on('update-available', (info) => this.mudar({ estado: 'disponivel', versao: info.version }));

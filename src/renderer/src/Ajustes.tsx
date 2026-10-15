@@ -89,7 +89,6 @@ export function Ajustes({ estado, aoVoltar, aoMudar }: Props) {
           <button className="primario" disabled={a.estado === 'verificando' || a.estado === 'baixando' || a.estado === 'dev'} onClick={() => api.atualizacao.buscar()}>
             Buscar atualizações
           </button>
-          {a.estado === 'disponivel' && <button onClick={() => api.atualizacao.baixar()}>Baixar versão {a.versao}</button>}
           {a.estado === 'pronta' && (
             <button className="primario" onClick={() => api.atualizacao.instalar()}>
               Reiniciar e instalar {a.versao}
@@ -100,7 +99,7 @@ export function Ajustes({ estado, aoVoltar, aoMudar }: Props) {
           {a.estado === 'dev' && 'Atualização automática só funciona no app instalado.'}
           {a.estado === 'verificando' && 'Verificando no GitHub…'}
           {a.estado === 'atualizado' && 'Você já está na versão mais recente.'}
-          {a.estado === 'disponivel' && `Nova versão disponível: ${a.versao}.`}
+          {a.estado === 'disponivel' && `Nova versão ${a.versao} encontrada; baixando em segundo plano…`}
           {a.estado === 'baixando' && `Baixando… ${a.porcento}%`}
           {a.estado === 'pronta' && `Versão ${a.versao} baixada. Reinicie para instalar.`}
           {a.estado === 'erro' && `Erro ao buscar atualizações: ${a.mensagem}`}
