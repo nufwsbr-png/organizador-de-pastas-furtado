@@ -9,6 +9,8 @@ export interface Pedido {
   imagens: string[];
   /** Pasta de trabalho / pasta com permissão de leitura. */
   cwd: string;
+  /** Outras pastas que a IA pode ler (ex.: PNGs gerados na pasta do job). */
+  dirsExtras?: string[];
   /** Nome curto para logs. */
   nomeTarefa: string;
 }

@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Fila, Job } from './fila';
+import { estaEncerrando } from './provedores/processo';
 
 /** Erro que pausa o job (limite da assinatura, API fora, chave inválida) em vez de marcá-lo como erro. */
 export class ErroPausa extends Error {
@@ -43,6 +44,7 @@ export async function executarJob(id: string, etapas: Etapa[], base: { fila: Fil
   fila.atualizar(id, { estado: 'rodando', motivo: undefined });
 
   const concluidas = new Set<string>();
+  const puladas = new Set<string>();
   const pendentes: string[] = [];
   const motivos: string[] = [];
 
@@ -50,8 +52,12 @@ export async function executarJob(id: string, etapas: Etapa[], base: { fila: Fil
     for (const etapa of etapas) {
       const job = fila.obter(id)!;
       const ctx: Contexto = { fila, pastaJob, job, log };
-      const faltando = (etapa.dependeDe ?? []).filter((d) => !concluidas.has(d));
-      if (faltando.length > 0) {
+      const deps = etapa.dependeDe ?? [];
+      if (deps.some((d) => puladas.has(d))) {
+        puladas.add(etapa.nome);
+        continue;
+      }
+      if (deps.some((d) => !concluidas.has(d))) {
         pendentes.push(etapa.nome);
         continue;
       }
@@ -68,13 +74,17 @@ export async function executarJob(id: string, etapas: Etapa[], base: { fila: Fil
         motivos.push(resultado.motivo);
         log(resultado.motivo, 'aviso');
       } else {
-        concluidas.add(etapa.nome);
+        puladas.add(etapa.nome);
         log(resultado.motivo);
       }
       fila.atualizar(id, { etapasConcluidas: [...concluidas], etapasPendentes: [...pendentes] });
     }
   } catch (erro) {
     const mensagem = erro instanceof Error ? erro.message : String(erro);
+    if (estaEncerrando()) {
+      // o app está fechando: o que foi interrompido continua na fila para a próxima abertura
+      return fila.atualizar(id, { estado: 'na-fila', etapasConcluidas: [...concluidas], etapasPendentes: [...pendentes] });
+    }
     const estado = erro instanceof ErroPausa ? 'pausado' : 'erro';
     log(mensagem, 'erro');
     return fila.atualizar(id, { estado, motivo: mensagem, etapasConcluidas: [...concluidas], etapasPendentes: [...pendentes] });

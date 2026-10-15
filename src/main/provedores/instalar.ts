@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { createWriteStream, existsSync, mkdirSync } from 'node:fs';
+import { createWriteStream, existsSync, mkdirSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
@@ -45,8 +45,9 @@ export async function instalarCodex(pastaBin: string, aoProgredir?: (texto: stri
     p.on('close', (c) => (c === 0 ? resolve() : reject(new Error(`Falha ao descompactar o Codex (código ${c}).`))));
     p.on('error', reject);
   });
-  const candidatos = [join(pastaBin, 'codex.exe'), join(pastaBin, 'codex-x86_64-pc-windows-msvc.exe')];
-  const exe = candidatos.find((c) => existsSync(c));
-  if (!exe) throw new Error('O download do Codex terminou, mas não achei o codex.exe.');
-  return exe;
+  const final = join(pastaBin, 'codex.exe');
+  const baixado = join(pastaBin, 'codex-x86_64-pc-windows-msvc.exe');
+  if (!existsSync(final) && existsSync(baixado)) renameSync(baixado, final);
+  if (!existsSync(final)) throw new Error('O download do Codex terminou, mas não achei o codex.exe.');
+  return final;
 }

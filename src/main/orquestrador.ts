@@ -67,6 +67,7 @@ export class Orquestrador {
     if (!job) return;
     this.rodando.add(id);
     this.semaforo.limite = Math.max(1, this.opcoes.paralelismo());
+    this.fila.atualizar(id, { estado: 'rodando', etapa: null, motivo: 'Aguardando a vez…' });
     try {
       this.opcoes.antesDeRodar?.(this.pastaJob(id));
       await this.semaforo.executar(() => executarJob(id, this.opcoes.etapas(), { fila: this.fila, pastaJob: this.pastaJob(id) }));

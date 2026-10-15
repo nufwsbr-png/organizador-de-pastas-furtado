@@ -95,3 +95,11 @@ describe('ProvedorCodex', () => {
     await expect(p.rodar({ prompt: 'RATE_LIMIT', schema, cwd: temp(), imagens: [], nomeTarefa: 't' })).rejects.toBeInstanceOf(ErroPausa);
   });
 });
+
+describe('pastas extras de leitura', () => {
+  it('claude recebe --add-dir para o cwd e para as pastas extras (PNGs do job)', () => {
+    const args = montarArgsClaude({ schema, cwd: 'C:\cliente', imagens: [], prompt: 'oi', nomeTarefa: 't', dirsExtras: ['C:\job'] });
+    const i = args.indexOf('--add-dir');
+    expect(args.slice(i + 1, i + 3)).toEqual(['C:\cliente', 'C:\job']);
+  });
+});

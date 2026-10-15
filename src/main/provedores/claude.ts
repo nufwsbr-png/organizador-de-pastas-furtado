@@ -16,8 +16,9 @@ export function montarArgsClaude(pedido: Pedido): string[] {
     'Read',
     '--add-dir',
     pedido.cwd,
+    ...(pedido.dirsExtras ?? []),
     '--max-turns',
-    '30',
+    '40',
   ];
 }
 

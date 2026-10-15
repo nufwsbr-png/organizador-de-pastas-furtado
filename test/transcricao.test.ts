@@ -65,3 +65,36 @@ describe('etapaTranscricao', () => {
     expect(r.status).toBe('pulada');
   });
 });
+
+describe('vários áudios', () => {
+  it('guarda a transcrição de cada áudio; se o segundo falhar, o primeiro não é transcrito de novo', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'tr2-'));
+    const cliente = join(dir, 'Cliente');
+    const pastaJob = join(dir, 'job');
+    mkdirSync(cliente); mkdirSync(pastaJob);
+    writeFileSync(join(cliente, 'Áudio da ligação.wav'), 'RIFF');
+    writeFileSync(join(cliente, 'ligacao 2.mp3'), 'ID3');
+    inventariar(cliente, join(pastaJob, 'inventario.json'));
+    const fila = new Fila(join(dir, 'jobs.json'));
+    const job = fila.adicionar(cliente);
+    const ctx: Contexto = { fila, pastaJob, job, log: () => {} };
+    const chamadas: string[] = [];
+    let falhar = true;
+    const etapa = etapaTranscricao({
+      chave: () => 'abc',
+      transcrever: async (arquivo) => {
+        chamadas.push(arquivo);
+        if (falhar && arquivo.endsWith('.mp3')) throw new Error('429');
+        return `T(${arquivo})`;
+      },
+    });
+    await expect(etapa.executar(ctx)).rejects.toThrow('429');
+    falhar = false;
+    const r = await etapa.executar(ctx);
+    expect(r.status).toBe('ok');
+    expect(chamadas.filter((c) => c.endsWith('.wav'))).toHaveLength(1);
+    const texto = readFileSync(join(pastaJob, 'transcricao.txt'), 'utf8');
+    expect(texto).toContain('T(');
+    expect(texto).toContain('ligacao 2.mp3');
+  });
+});

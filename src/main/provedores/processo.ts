@@ -16,16 +16,35 @@ export interface OpcoesProcesso {
 }
 
 const ativos = new Set<ChildProcess>();
+let encerrando = false;
+
+/** Verdadeiro depois que o app começou a fechar (os jobs interrompidos voltam para a fila). */
+export function estaEncerrando(): boolean {
+  return encerrando;
+}
+
+/** Só para testes. */
+export function reiniciarEncerramento(): void {
+  encerrando = false;
+}
+
+/** Mata o processo e tudo que ele abriu (no Windows, um .cmd abre node/claude por baixo). */
+export function matarArvore(p: ChildProcess): void {
+  try {
+    if (process.platform === 'win32' && p.pid) {
+      spawn('taskkill', ['/pid', String(p.pid), '/t', '/f'], { windowsHide: true, stdio: 'ignore' }).on('error', () => p.kill());
+    } else {
+      p.kill();
+    }
+  } catch {
+    /* já morreu */
+  }
+}
 
 /** Mata os processos filhos ainda abertos (chamado ao fechar o app). */
 export function matarProcessos(): void {
-  for (const p of ativos) {
-    try {
-      p.kill();
-    } catch {
-      /* já morreu */
-    }
-  }
+  encerrando = true;
+  for (const p of ativos) matarArvore(p);
   ativos.clear();
 }
 
@@ -63,7 +82,7 @@ export function executarProcesso(executavel: string, args: string[], opcoes: Opc
 
     const timer = setTimeout(() => {
       expirou = true;
-      filho.kill();
+      matarArvore(filho);
     }, timeoutMs);
 
     filho.on('error', (erro) => {

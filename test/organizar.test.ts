@@ -188,3 +188,30 @@ describe('etapaMover', () => {
     expect(existsSync(join(cliente, 'Contratos', 'Procuração.pdf'))).toBe(true);
   });
 });
+
+describe('casos da revisão', () => {
+  it('dois arquivos com o mesmo nome em pastas diferentes não colidem em Revisar', () => {
+    const plano = planejarMovimentos(
+      [
+        { relativo: 'WhatsApp/doc (1).pdf', situacao: 'classificar', tamanho: 1, modificadoEm: '' },
+        { relativo: 'Scan/doc (1).pdf', situacao: 'classificar', tamanho: 1, modificadoEm: '' },
+      ],
+      [
+        { id: 0, tipo: 'outro', grupo: null, ordem: 1 },
+        { id: 1, tipo: 'outro', grupo: null, ordem: 1 },
+      ],
+      { 0: 'WhatsApp/doc (1).pdf', 1: 'Scan/doc (1).pdf' },
+      false,
+    );
+    const destinos = plano.movimentos.map((m) => m.destino);
+    expect(new Set(destinos).size).toBe(2);
+    expect(destinos.every((d) => d.startsWith('Revisar/'))).toBe(true);
+  });
+
+  it('classificar manda a pasta do job como pasta extra de leitura (PNGs dos PDFs digitalizados)', async () => {
+    const { ctx, pastaJob } = await pastaBaguncada();
+    const pedidos: Pedido[] = [];
+    await etapaClassificar(() => provedorFalso(classificacaoFalsa, pedidos)).executar(ctx);
+    expect(pedidos[0].dirsExtras).toEqual([pastaJob]);
+  });
+});

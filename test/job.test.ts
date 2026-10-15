@@ -120,3 +120,42 @@ describe('executarJob', () => {
     expect(atual.mensagens.some((m) => m.nivel === 'erro')).toBe(true);
   });
 });
+
+describe('executarJob — casos da revisão', () => {
+  it('etapa pulada não conta como concluída: as dependentes são puladas e o job conclui', async () => {
+    const { fila, job, pastaJob } = preparar();
+    const ordem: string[] = [];
+    const etapas = [
+      etapa('transcricao', 't.txt', async () => ({ pulada: 'sem áudio' })),
+      etapa('respostas', 'r.json', async () => { ordem.push('respostas'); }, ['transcricao']),
+      etapa('pdf', 'p.pdf', async () => { ordem.push('pdf'); }, ['respostas']),
+      etapa('mover', 'm.json', async () => { ordem.push('mover'); }),
+    ];
+    await executarJob(job.id, etapas, { fila, pastaJob });
+    expect(ordem).toEqual(['mover']);
+    const atual = fila.obter(job.id)!;
+    expect(atual.estado).toBe('concluido');
+    expect(atual.etapasConcluidas).toEqual(['mover']);
+    expect(atual.etapasPendentes).toEqual([]);
+  });
+
+  it('se o app está fechando, o job interrompido volta para a fila em vez de virar erro', async () => {
+    const { fila, job, pastaJob } = preparar();
+    const { matarProcessos, reiniciarEncerramento } = await import('../src/main/provedores/processo');
+    const etapas = [
+      etapa('a', 'a.txt', async () => {}),
+      etapa('b', 'b.txt', async () => {
+        matarProcessos();
+        throw new Error('Claude: saiu com código null');
+      }),
+    ];
+    try {
+      await executarJob(job.id, etapas, { fila, pastaJob });
+      const atual = fila.obter(job.id)!;
+      expect(atual.estado).toBe('na-fila');
+      expect(atual.etapasConcluidas).toEqual(['a']);
+    } finally {
+      reiniciarEncerramento();
+    }
+  });
+});

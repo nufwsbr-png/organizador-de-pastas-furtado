@@ -46,13 +46,22 @@ export function etapaTranscricao(deps: DepsTranscricao): Etapa {
       if (!chave) return { status: 'pendente', motivo: MENSAGEM_SEM_TRANSCRICAO };
 
       const partes: string[] = [];
-      for (const relativo of inventario.audios) {
+      for (let n = 0; n < inventario.audios.length; n++) {
+        const relativo = inventario.audios[n];
         const arquivo = join(pastaCliente, relativo);
         if (!existsSync(arquivo)) continue;
-        ctx.log(`Transcrevendo ${relativo}…`);
-        const texto = await deps.transcrever(arquivo, chave);
+        // cada áudio transcrito fica guardado: se o próximo falhar, este não é cobrado de novo
+        const cache = join(ctx.pastaJob, `transcricao-${n + 1}.txt`);
+        let texto: string;
+        if (existsSync(cache)) {
+          texto = readFileSync(cache, 'utf8');
+        } else {
+          ctx.log(`Transcrevendo ${relativo}…`);
+          texto = await deps.transcrever(arquivo, chave);
+          writeFileSync(cache, texto);
+          ctx.log(`Transcrição de ${relativo} pronta (${texto.length} caracteres).`);
+        }
         partes.push(inventario.audios.length > 1 ? `===== ${relativo} =====\n\n${texto}` : texto);
-        ctx.log(`Transcrição de ${relativo} pronta (${texto.length} caracteres).`);
       }
       writeFileSync(destino, partes.join('\n\n'));
       return { status: 'ok' };

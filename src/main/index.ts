@@ -1,5 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
-import { appendFileSync, existsSync, mkdirSync, rmSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Atualizador, type EstadoAtualizacao } from './atualizador';
 import { Config, type Ajustes } from './config';
@@ -101,12 +101,16 @@ function enviar(canal: string, dados: unknown): void {
 
 orquestrador.fila.aoMudar((jobs) => enviar('jobs', jobs));
 
+/** `--captura=<arquivo.png>`: renderiza a janela escondida, salva a imagem e fecha (usado só para conferir o visual). */
+const arquivoCaptura = process.argv.find((a) => a.startsWith('--captura='))?.slice('--captura='.length) ?? null;
+
 function criarJanela(): void {
   janela = new BrowserWindow({
     width: 1180,
     height: 780,
     minWidth: 900,
     minHeight: 600,
+    show: !arquivoCaptura,
     title: 'Organizador de Pastas Furtado',
     autoHideMenuBar: true,
     webPreferences: { preload: join(import.meta.dirname, '../preload/index.mjs'), sandbox: false, contextIsolation: true },
@@ -114,6 +118,18 @@ function criarJanela(): void {
   if (process.env.ELECTRON_RENDERER_URL) void janela.loadURL(process.env.ELECTRON_RENDERER_URL);
   else void janela.loadFile(join(import.meta.dirname, '../renderer/index.html'));
   janela.on('closed', () => (janela = null));
+  if (arquivoCaptura) {
+    janela.webContents.once('did-finish-load', () => {
+      setTimeout(async () => {
+        try {
+          const imagem = await janela!.webContents.capturePage();
+          writeFileSync(arquivoCaptura, imagem.toPNG());
+        } finally {
+          app.quit();
+        }
+      }, 2500);
+    });
+  }
 }
 
 async function statusProvedores(): Promise<Record<IdProvedor, StatusProvedor>> {
@@ -222,8 +238,10 @@ if (!app.requestSingleInstanceLock()) {
     registrarIpc();
     criarJanela();
     if (!existsSync(join(userData, 'jobs'))) mkdirSync(join(userData, 'jobs'), { recursive: true });
-    orquestrador.retomarPendentes().catch((erro) => log(`retomar falhou: ${erro}`));
-    setTimeout(() => atualizador?.buscar(), 5_000);
+    if (!arquivoCaptura) {
+      orquestrador.retomarPendentes().catch((erro) => log(`retomar falhou: ${erro}`));
+      setTimeout(() => atualizador?.buscar(), 5_000);
+    }
   });
 
   app.on('before-quit', () => matarProcessos());

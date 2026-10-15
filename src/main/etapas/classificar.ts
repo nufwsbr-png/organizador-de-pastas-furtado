@@ -92,7 +92,15 @@ export function planejarMovimentos(
   const ocupados = new Set<string>();
   for (const a of arquivos) if (a.situacao === 'no-lugar') ocupados.add(a.tipo);
 
-  const paraRevisar = (relativo: string, tipo: string) => plano.movimentos.push({ origem: relativo, destino: `Revisar/${basename(relativo)}`, tipo });
+  const destinosUsados = new Set<string>();
+  const paraRevisar = (relativo: string, tipo: string) => {
+    const ext = extname(relativo);
+    const base = basename(relativo, ext);
+    let destino = `Revisar/${base}${ext}`;
+    for (let n = 2; destinosUsados.has(destino); n++) destino = `Revisar/${base} (${n})${ext}`;
+    destinosUsados.add(destino);
+    plano.movimentos.push({ origem: relativo, destino, tipo });
+  };
 
   // 1. Arquivos com nome padrão fora do lugar.
   let audios = 0;
@@ -202,6 +210,7 @@ export function etapaClassificar(provedor: () => Provedor): Etapa {
           schema: SCHEMA_CLASSIFICAR,
           imagens,
           cwd: ctx.job.pasta,
+          dirsExtras: [ctx.pastaJob],
           nomeTarefa: 'classificar',
         })) as { arquivos: Classificacao[] };
         classificacoes = resultado.arquivos ?? [];
