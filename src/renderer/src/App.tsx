@@ -42,6 +42,7 @@ export function App() {
 
   return (
     <>
+      <div className="mancha" style={{ right: -160, top: -160 }} />
       {aviso && <div className="aviso-flutuante">{aviso}</div>}
       {tela === 'login' && <Login aoEntrar={entrar} provedorAtual={estado.ajustes.provedor} />}
       {tela === 'principal' && <Principal estado={estado} aoAjustes={() => setTela('ajustes')} aoTrocarLogin={() => setTela('login')} />}

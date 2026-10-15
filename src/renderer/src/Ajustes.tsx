@@ -38,9 +38,13 @@ export function Ajustes({ estado, aoVoltar, aoMudar }: Props) {
   return (
     <div className="tela-ajustes">
       <header className="barra">
-        <h1>Ajustes</h1>
+        <div className="marca">
+          <img src="/simbolo.svg" alt="" />
+          <h1>Ajustes</h1>
+        </div>
         <button onClick={aoVoltar}>← Voltar</button>
       </header>
+      <div className="linha-grad" />
 
       <section>
         <h2>Transcrição (ElevenLabs)</h2>

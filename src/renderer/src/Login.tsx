@@ -36,8 +36,17 @@ export function Login({ aoEntrar, provedorAtual }: Props) {
 
   return (
     <div className="tela-login">
+      <div className="marca">
+        <img src="/simbolo.svg" alt="" />
+        <span className="marca-nome">
+          NuFws<small>Soluções IA</small>
+        </span>
+      </div>
       <header>
-        <h1>Organizador de Pastas Furtado</h1>
+        <span className="rotulo">Organizador de pastas · Furtado</span>
+        <h1>
+          Pastas de clientes em <span className="destaque">ordem</span>, sozinhas.
+        </h1>
         <p>Escolha com qual assinatura o app vai ler os documentos e preencher a entrevista.</p>
       </header>
       <div className="cartoes">

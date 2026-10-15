@@ -58,11 +58,14 @@ export function Principal({ estado, aoAjustes, aoTrocarLogin }: Props) {
   return (
     <div className="tela-principal">
       <header className="barra">
-        <div>
-          <h1>Organizador de Pastas Furtado</h1>
-          <span className="sub">
-            {estado.ajustes.provedor === 'claude' ? 'Claude' : 'ChatGPT'} · {estado.chaveElevenLabs ? 'ElevenLabs configurado' : 'sem chave do ElevenLabs'}
-          </span>
+        <div className="marca">
+          <img src="/simbolo.svg" alt="" />
+          <div>
+            <h1>Organizador de Pastas Furtado</h1>
+            <span className="sub">
+              {estado.ajustes.provedor === 'claude' ? 'Claude' : 'ChatGPT'} · {estado.chaveElevenLabs ? 'ElevenLabs configurado' : 'sem chave do ElevenLabs'}
+            </span>
+          </div>
         </div>
         <div className="acoes">
           <button onClick={() => tentar(() => api.pastas.escolher())}>Enviar pasta</button>
@@ -78,12 +81,15 @@ export function Principal({ estado, aoAjustes, aoTrocarLogin }: Props) {
         </div>
       </header>
 
+      <div className="linha-grad" />
       {erro && <p className="erro">{erro}</p>}
 
       {jobs.length === 0 ? (
         <div className="vazio">
-          <p>Nenhuma pasta ainda.</p>
-          <p>Clique em <b>Enviar pasta</b> e escolha a pasta de um ou mais clientes. Depois, <b>Organizar pasta</b>.</p>
+          <h2>Nenhuma pasta ainda.</h2>
+          <p>
+            Clique em <b>Enviar pasta</b> e escolha a pasta de um ou mais clientes. Depois, <b>Organizar pasta</b>.
+          </p>
         </div>
       ) : (
         <div className="colunas">
