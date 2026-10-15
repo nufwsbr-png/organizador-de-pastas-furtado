@@ -10,7 +10,7 @@ interface Aberto {
 
 async function abrir(arquivo: string): Promise<Aberto> {
   const dados = new Uint8Array(readFileSync(arquivo));
-  const tarefa = getDocument({ data: dados, useSystemFonts: true, isEvalSupported: false });
+  const tarefa = getDocument({ data: dados, useSystemFonts: true });
   const doc = await tarefa.promise;
   return { doc, fechar: () => tarefa.destroy() };
 }

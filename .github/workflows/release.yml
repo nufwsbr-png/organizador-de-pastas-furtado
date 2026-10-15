@@ -23,6 +23,12 @@ jobs:
           git push origin "v1.0.${{ github.run_number }}"
       - run: npm test
       - run: npm run build
-      - run: npx electron-builder --win --publish always
+      - run: npx electron-builder --win --publish never
+      - name: Publica a release com o instalador e o latest.yml (electron-updater lê daqui)
+        run: >
+          gh release create "v1.0.${{ github.run_number }}"
+          release/*.exe release/*.blockmap release/latest.yml
+          --title "1.0.${{ github.run_number }}"
+          --notes "Build automática do commit ${{ github.sha }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
