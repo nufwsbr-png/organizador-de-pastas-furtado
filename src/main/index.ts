@@ -218,7 +218,7 @@ if (!app.requestSingleInstanceLock()) {
 
   void app.whenReady().then(() => {
     log(`app ${app.getVersion()} iniciado`);
-    atualizador = new Atualizador((e) => enviar('atualizacao', e));
+    atualizador = new Atualizador((e) => enviar('atualizacao', e), log);
     registrarIpc();
     criarJanela();
     if (!existsSync(join(userData, 'jobs'))) mkdirSync(join(userData, 'jobs'), { recursive: true });

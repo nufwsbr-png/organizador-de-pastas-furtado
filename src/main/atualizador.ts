@@ -16,7 +16,10 @@ export type EstadoAtualizacao =
 export class Atualizador {
   private ultimo: EstadoAtualizacao = app.isPackaged ? { estado: 'atualizado', versao: app.getVersion() } : { estado: 'dev' };
 
-  constructor(private emitir: (estado: EstadoAtualizacao) => void) {
+  constructor(
+    private emitir: (estado: EstadoAtualizacao) => void,
+    private log: (texto: string) => void = () => {},
+  ) {
     autoUpdater.autoDownload = false;
     autoUpdater.autoInstallOnAppQuit = true;
     autoUpdater.on('checking-for-update', () => this.mudar({ estado: 'verificando' }));
@@ -29,6 +32,7 @@ export class Atualizador {
 
   private mudar(estado: EstadoAtualizacao): void {
     this.ultimo = estado;
+    this.log(`atualizador: ${JSON.stringify(estado)}`);
     this.emitir(estado);
   }
 
