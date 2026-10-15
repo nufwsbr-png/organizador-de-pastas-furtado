@@ -175,3 +175,19 @@ describe('PDF real de perguntas', () => {
     expect(await contarPaginas(pdf)).toBe(10);
   });
 });
+
+describe('etapaEntregarEntrevista', () => {
+  it('copia o PDF do job para Entrevista/ na pasta do cliente', async () => {
+    const { etapaEntregarEntrevista } = await import('../src/main/etapas/entregar-entrevista');
+    const { ctx, pastaJob, cliente } = await preparar({ transcricao: 'x' });
+    writeFileSync(join(pastaJob, 'Entrevista preenchida.pdf'), '%PDF-1');
+    const r = await etapaEntregarEntrevista().executar(ctx);
+    expect(r.status).toBe('ok');
+    expect(readFileSync(join(cliente, 'Entrevista', 'Entrevista preenchida.pdf'), 'utf8')).toBe('%PDF-1');
+    // nova versão substitui e guarda a antiga
+    writeFileSync(join(pastaJob, 'Entrevista preenchida.pdf'), '%PDF-2');
+    await etapaEntregarEntrevista().executar(ctx);
+    expect(readFileSync(join(cliente, 'Entrevista', 'Entrevista preenchida.pdf'), 'utf8')).toBe('%PDF-2');
+    expect(existsSync(join(cliente, '_substituidos', 'Entrevista'))).toBe(true);
+  });
+});
