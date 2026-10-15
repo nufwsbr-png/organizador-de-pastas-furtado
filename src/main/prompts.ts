@@ -10,6 +10,7 @@ Leia TODAS as imagens com atenção e extraia:
 
 Regras:
 - Copie o texto de cada pergunta exatamente como está, sem resumir.
+- Se o título da seção de uma pergunta não aparecer na página (a página começa no meio da seção), use o título da última seção vista; se nenhum título apareceu ainda, use "Entrevista". Nunca escreva observações no campo secao.
 - Não invente perguntas; se uma página estiver ilegível, pule-a.
 - A numeração deve ser contínua (1, 2, 3, ...).
 - Responda SOMENTE no formato JSON pedido.`;
