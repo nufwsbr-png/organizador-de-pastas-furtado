@@ -100,7 +100,8 @@ export function etapaPerguntas(provedor: () => Provedor): Etapa {
       const problema = validarPerguntas(perguntas);
       if (problema) return { status: 'pendente', motivo: `${problema} Clique em Organizar de novo para tentar outra vez.` };
 
-      if (resultado.dadosCliente) writeFileSync(join(ctx.pastaJob, 'dados-cliente.json'), JSON.stringify(resultado.dadosCliente, null, 2));
+      const dadosCliente = Object.fromEntries(Object.entries(resultado.dadosCliente ?? {}).filter(([, v]) => typeof v === 'string' && v.trim()));
+      if (Object.keys(dadosCliente).length > 0) writeFileSync(join(ctx.pastaJob, 'dados-cliente.json'), JSON.stringify(dadosCliente, null, 2));
       writeFileSync(join(ctx.pastaJob, 'perguntas.json'), JSON.stringify(perguntas, null, 2));
       ctx.log(`${perguntas.length} perguntas encontradas.`);
       return { status: 'ok' };

@@ -6,6 +6,39 @@ import { classificarErroIA } from './claude';
 import { executarProcesso } from './processo';
 import type { OpcoesExecutavel, Pedido, Provedor, StatusProvedor } from './tipos';
 
+type Esquema = Record<string, unknown>;
+
+function tornarNulavel(s: Esquema): Esquema {
+  const tipo = s.type;
+  if (Array.isArray(tipo)) return tipo.includes('null') ? s : { ...s, type: [...tipo, 'null'] };
+  if (typeof tipo === 'string') return { ...s, type: [tipo, 'null'] };
+  return s;
+}
+
+/**
+ * O Codex (API da OpenAI) só aceita esquemas "estritos": todo objeto precisa listar
+ * todas as propriedades em `required` e fechar `additionalProperties`. Propriedades que
+ * eram opcionais passam a aceitar null, para o modelo poder "omiti-las". Não altera o original.
+ */
+export function esquemaEstrito(schema: unknown): unknown {
+  if (Array.isArray(schema)) return schema.map(esquemaEstrito);
+  if (!schema || typeof schema !== 'object') return schema;
+  const s = { ...(schema as Esquema) };
+  if (s.properties && typeof s.properties === 'object') {
+    const antes = new Set((s.required as string[] | undefined) ?? []);
+    const props: Esquema = {};
+    for (const [nome, sub] of Object.entries(s.properties as Esquema)) {
+      const estrito = esquemaEstrito(sub) as Esquema;
+      props[nome] = antes.has(nome) ? estrito : tornarNulavel(estrito);
+    }
+    s.properties = props;
+    s.required = Object.keys(props);
+    s.additionalProperties = false;
+  }
+  if (s.items) s.items = esquemaEstrito(s.items);
+  return s;
+}
+
 export function montarArgsCodex(pedido: Pedido, arquivoSchema: string, arquivoSaida: string): string[] {
   const args = [
     'exec',
@@ -77,7 +110,7 @@ export class ProvedorCodex implements Provedor {
     mkdirSync(pastaTemp, { recursive: true });
     const arquivoSchema = join(pastaTemp, 'schema.json');
     const arquivoSaida = join(pastaTemp, 'saida.json');
-    writeFileSync(arquivoSchema, JSON.stringify(pedido.schema));
+    writeFileSync(arquivoSchema, JSON.stringify(esquemaEstrito(pedido.schema)));
     try {
       const r = await executarProcesso(executavel, [...argsPrefixo, ...montarArgsCodex(pedido, arquivoSchema, arquivoSaida)], {
         stdin: pedido.prompt,

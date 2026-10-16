@@ -39,3 +39,23 @@ describe.skipIf(!REAL)('provedores reais', () => {
     expect(r.capital.toLowerCase()).toContain('bras');
   }, 200_000);
 });
+
+describe.skipIf(!REAL)('codex aceita os esquemas do app (modo estrito)', () => {
+  it('perguntas, respostas e classificar', async () => {
+    const { SCHEMA_PERGUNTAS } = await import('../../src/main/etapas/perguntas');
+    const { SCHEMA_RESPOSTAS } = await import('../../src/main/etapas/respostas');
+    const { SCHEMA_CLASSIFICAR } = await import('../../src/main/etapas/classificar');
+    const exe = localizarExecutavel('codex');
+    const p = new ProvedorCodex({ executavel: exe!, timeoutMs: 180_000 });
+    const cwd = mkdtempSync(join(tmpdir(), 'c-'));
+    const a = (await p.rodar({ prompt: 'Invente 2 perguntas de entrevista trabalhista, numeradas 1 e 2, seção "Geral". Não há dados do cliente.', schema: SCHEMA_PERGUNTAS, imagens: [], cwd, nomeTarefa: 'perguntas' })) as { perguntas: unknown[] };
+    console.log('perguntas', JSON.stringify(a));
+    expect(a.perguntas).toHaveLength(2);
+    const b = (await p.rodar({ prompt: 'Responda: 1. Trabalhou aos sábados? (Sim/Não) — a cliente disse que sim. 2. Qual o salário? — não abordado.', schema: SCHEMA_RESPOSTAS, imagens: [], cwd, nomeTarefa: 'respostas' })) as { respostas: unknown[] };
+    console.log('respostas', JSON.stringify(b));
+    expect(b.respostas).toHaveLength(2);
+    const c = (await p.rodar({ prompt: 'Classifique: [id: 1] rg-frente.jpg (foto de um RG, frente). [id: 2] procuracao.pdf.', schema: SCHEMA_CLASSIFICAR, imagens: [], cwd, nomeTarefa: 'classificar' })) as { arquivos: unknown[] };
+    console.log('classificar', JSON.stringify(c));
+    expect(c.arquivos).toHaveLength(2);
+  }, 400_000);
+});
