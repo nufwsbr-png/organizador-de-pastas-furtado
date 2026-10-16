@@ -6,6 +6,8 @@ Aplicativo para Windows que organiza a pasta de cada cliente do escritório: tra
 1. Instale o `Organizador-de-Pastas-Furtado-Setup-<versão>.exe` da aba **Releases**.
 2. Abra o app e entre com a assinatura do **Claude** (Claude Code) ou do **ChatGPT** (Codex). O app oferece instalar o programa oficial se ele não estiver no PC.
 3. Em **Ajustes**, cole a chave da API do ElevenLabs (fica no `.env` do app). Sem ela o app organiza a pasta, mas avisa que precisa da transcrição ou da API para preencher a entrevista.
+   - A pasta pode vir com a **transcrição pronta** em vez do áudio: um arquivo `.txt`, `.docx` ou `.pdf` com "Transcrição" no nome (em qualquer subpasta). Ele é usado no lugar da API e vai para `Entrevista/Transcrição.<ext>`.
+   - Perguntas feitas na ligação que não estão no roteiro entram no PDF na seção **Outras perguntas feitas**.
 4. **Enviar pasta** → escolha uma ou várias pastas de clientes → **Organizar pasta**.
 5. Se fechar o app, ao abrir as pastas continuam de onde pararam.
 

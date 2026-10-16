@@ -6,7 +6,7 @@ import { createWriteStream } from 'node:fs';
 import { Fila } from '../src/main/fila';
 import { inventariar } from '../src/main/etapas/inventario';
 import { etapaPerguntas, validarPerguntas, type Pergunta } from '../src/main/etapas/perguntas';
-import { etapaRespostas, type Resposta } from '../src/main/etapas/respostas';
+import { etapaRespostas, type OutraPergunta, type Resposta } from '../src/main/etapas/respostas';
 import { etapaPdfEntrevista, gerarPdfEntrevista } from '../src/main/etapas/pdf-entrevista';
 import { extrairTexto, contarPaginas } from '../src/main/ferramentas/pdf';
 import type { Contexto } from '../src/main/job';
@@ -112,6 +112,26 @@ describe('etapaRespostas', () => {
     expect(gravado.map((x) => x.numero)).toEqual([1, 2, 3]);
   });
 
+  it('perguntas feitas na ligação fora do roteiro são pedidas à IA e gravadas em outras-perguntas.json', async () => {
+    const { ctx, pastaJob } = await preparar({ transcricao: 'x' });
+    writeFileSync(join(pastaJob, 'perguntas.json'), JSON.stringify(perguntasExemplo));
+    const pedidos: Pedido[] = [];
+    const etapa = etapaRespostas(() =>
+      provedorFalso(
+        {
+          respostas: [{ numero: 1, simNao: null, resposta: 'a', naoRespondida: false }],
+          outrasPerguntas: [{ pergunta: 'Você tinha intervalo para almoço?', resposta: 'Disse que tinha 30 minutos.' }],
+        },
+        pedidos,
+      ),
+    );
+    await etapa.executar(ctx);
+    expect(pedidos[0].prompt).toMatch(/outras perguntas/i);
+    expect((pedidos[0].schema as { properties: Record<string, unknown> }).properties).toHaveProperty('outrasPerguntas');
+    const outras = JSON.parse(readFileSync(join(pastaJob, 'outras-perguntas.json'), 'utf8')) as OutraPergunta[];
+    expect(outras).toEqual([{ pergunta: 'Você tinha intervalo para almoço?', resposta: 'Disse que tinha 30 minutos.' }]);
+  });
+
   it('pergunta que a IA esqueceu entra como não respondida', async () => {
     const { ctx, pastaJob } = await preparar({ transcricao: 'x' });
     writeFileSync(join(pastaJob, 'perguntas.json'), JSON.stringify(perguntasExemplo));
@@ -137,9 +157,13 @@ describe('PDF da entrevista', () => {
         { numero: 3, simNao: 'Não', resposta: 'Sempre o mesmo horário.', naoRespondida: false },
       ],
       transcricao: '[00:00] Falante 1: Onde você trabalhava?',
+      outrasPerguntas: [{ pergunta: 'Você tinha intervalo para almoço?', resposta: 'Disse que tinha 30 minutos.' }],
       geradoEm: new Date('2026-10-15T12:00:00'),
     });
     const texto = await extrairTexto(destino);
+    expect(texto).toContain('Outras perguntas feitas');
+    expect(texto).toContain('Você tinha intervalo para almoço?');
+    expect(texto).toContain('Disse que tinha 30 minutos.');
     expect(texto).toContain('Maria Souza');
     expect(texto).toContain('Qual era o endereço');
     expect(texto).toContain('Rua das Flores, 10.');
@@ -161,9 +185,11 @@ describe('PDF da entrevista', () => {
         { numero: 3, simNao: 'Sim', resposta: 'b', naoRespondida: false },
       ]),
     );
+    writeFileSync(join(pastaJob, 'outras-perguntas.json'), JSON.stringify([{ pergunta: 'Tinha intervalo?', resposta: 'Sim, 30 minutos.' }]));
     const r = await etapaPdfEntrevista().executar(ctx);
     expect(r.status).toBe('ok');
     expect(existsSync(join(pastaJob, 'Entrevista preenchida.pdf'))).toBe(true);
+    expect(await extrairTexto(join(pastaJob, 'Entrevista preenchida.pdf'))).toContain('Tinha intervalo?');
     expect(mensagens.some((m) => /1 pergunta/.test(m))).toBe(true);
   });
 });

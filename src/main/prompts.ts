@@ -17,7 +17,9 @@ Regras:
 
 export const PROMPT_RESPOSTAS = (perguntas: string, transcricao: string) => `Você é assistente de um escritório de advocacia trabalhista. Abaixo estão as perguntas de uma entrevista e a transcrição da ligação em que a atendente fez essas perguntas ao cliente (a transcrição vem separada por falante e pode ter erros de reconhecimento de voz).
 
-Sua tarefa: para CADA pergunta, escrever a resposta do cliente com base SOMENTE no que ele disse na ligação.
+Sua tarefa tem duas partes:
+1. Para CADA pergunta da lista, escrever a resposta do cliente com base SOMENTE no que ele disse na ligação.
+2. Em "outrasPerguntas" (outras perguntas feitas), listar as perguntas que a atendente fez na ligação e que NÃO estão na lista (nem são só uma reformulação de uma pergunta da lista), cada uma com a resposta do cliente. Se não houve nenhuma, devolva a lista vazia.
 
 Regras obrigatórias:
 - Use apenas o que está na transcrição. NUNCA invente, complete ou deduza fatos que o cliente não disse.
@@ -25,7 +27,8 @@ Regras obrigatórias:
 - Se a pergunta tem opção Sim/Não, preencha simNao com "Sim" ou "Não" conforme o que o cliente disse; se ele não deixou claro, use null.
 - Se o assunto da pergunta não foi tratado na ligação, marque naoRespondida = true e deixe resposta vazia. Não escreva "não informado" na resposta.
 - Mantenha o número de cada pergunta igual ao da lista.
-- Responda SOMENTE no formato JSON pedido, com uma entrada para cada pergunta da lista.
+- Em outrasPerguntas, escreva a pergunta como a atendente fez (resumida se for longa) e a resposta nas mesmas regras acima; não inclua cumprimentos, confirmação de dados cadastrais nem perguntas sem resposta.
+- Responda SOMENTE no formato JSON pedido, com uma entrada em respostas para cada pergunta da lista.
 
 PERGUNTAS:
 ${perguntas}

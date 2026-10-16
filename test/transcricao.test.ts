@@ -98,3 +98,54 @@ describe('vários áudios', () => {
     expect(texto).toContain('ligacao 2.mp3');
   });
 });
+
+describe('transcrição pronta na pasta em outros formatos', () => {
+  async function docx(destino: string, texto: string) {
+    const JSZip = (await import('jszip')).default;
+    const zip = new JSZip();
+    zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`);
+    zip.file('_rels/.rels', `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
+    const paragrafos = texto.split('\n').map((l) => `<w:p><w:r><w:t xml:space="preserve">${l}</w:t></w:r></w:p>`).join('');
+    zip.file('word/document.xml', `<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${paragrafos}</w:body></w:document>`);
+    writeFileSync(destino, await zip.generateAsync({ type: 'nodebuffer' }));
+  }
+
+  it('acha um .docx com "transcri" no nome em subpasta, lê o texto e não chama a API', async () => {
+    const { cliente, ctx, etapa, pastaJob, chamadas } = preparar({ audio: true, chave: 'abc' });
+    mkdirSync(join(cliente, 'Ligação'));
+    await docx(join(cliente, 'Ligação', 'Transcricao da entrevista.docx'), 'Atendente: Bom dia.\nCliente: Bom dia, trabalhei na Rivelli.');
+    inventariar(cliente, join(pastaJob, 'inventario.json'));
+    const r = await etapa.executar(ctx);
+    expect(r.status).toBe('ok');
+    expect(chamadas).toEqual([]);
+    const texto = readFileSync(join(pastaJob, 'transcricao.txt'), 'utf8');
+    expect(texto).toContain('Atendente: Bom dia.');
+    expect(texto).toContain('Cliente: Bom dia, trabalhei na Rivelli.');
+  });
+
+  it('acha um .pdf de transcrição e extrai o texto', async () => {
+    const { cliente, ctx, etapa, pastaJob } = preparar({ audio: false });
+    const PDFDocument = (await import('pdfkit')).default;
+    const { createWriteStream } = await import('node:fs');
+    await new Promise<void>((resolve) => {
+      const doc = new PDFDocument();
+      const s = doc.pipe(createWriteStream(join(cliente, 'Transcrição da ligação.pdf')));
+      doc.text('Cliente: eu trabalhava das sete as cinco todos os dias.');
+      doc.end();
+      s.on('finish', () => resolve());
+    });
+    inventariar(cliente, join(pastaJob, 'inventario.json'));
+    const r = await etapa.executar(ctx);
+    expect(r.status).toBe('ok');
+    expect(readFileSync(join(pastaJob, 'transcricao.txt'), 'utf8')).toContain('sete as cinco');
+  });
+
+  it('sem áudio mas com transcrição em txt com outro nome a entrevista segue', async () => {
+    const { cliente, ctx, etapa, pastaJob } = preparar({ audio: false });
+    writeFileSync(join(cliente, 'transcript ligacao.txt'), 'Cliente: sim, fazia hora extra.');
+    inventariar(cliente, join(pastaJob, 'inventario.json'));
+    const r = await etapa.executar(ctx);
+    expect(r.status).toBe('ok');
+    expect(readFileSync(join(pastaJob, 'transcricao.txt'), 'utf8')).toBe('Cliente: sim, fazia hora extra.');
+  });
+});

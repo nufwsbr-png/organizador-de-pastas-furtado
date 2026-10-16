@@ -23,13 +23,14 @@ export const DOCUMENTOS_PADRAO: readonly DocumentoPadrao[] = [
   { nome: 'Perguntas entrevista', pasta: 'Entrevista', extensoes: ['.pdf'] },
   { nome: 'Áudio da ligação', pasta: 'Entrevista', extensoes: [] },
   { nome: 'Entrevista preenchida', pasta: 'Entrevista', extensoes: ['.pdf'] },
+  { nome: 'Transcrição', pasta: 'Entrevista', extensoes: ['.txt', '.docx', '.pdf', '.md'] },
 ];
 
 export type TipoDocumento = (typeof DOCUMENTOS_PADRAO)[number]['nome'];
 
 /** Pastas internas do organizador que nunca são mexidas. */
 export const PASTAS_INTERNAS = ['_substituidos', 'Revisar'] as const;
-const ARQUIVOS_IGNORADOS = ['thumbs.db', 'desktop.ini', '.ds_store', 'transcricao.txt'];
+const ARQUIVOS_IGNORADOS = ['thumbs.db', 'desktop.ini', '.ds_store'];
 
 const EXT_AUDIO = ['.wav', '.mp3', '.m4a', '.ogg', '.opus', '.aac', '.flac', '.wma', '.amr', '.mp4', '.webm'];
 const EXT_IMAGEM = ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif', '.tif', '.tiff'];
@@ -64,7 +65,7 @@ export function classificarCaminho(relativo: string): Situacao {
   const doc = DOCUMENTOS_PADRAO.find(
     (d) => normalizar(d.nome) === nomeBase && (d.extensoes.length === 0 || d.extensoes.includes(ext)),
   );
-  const tipo = doc?.nome ?? (ehAudio(arquivo) ? 'Áudio da ligação' : null);
+  const tipo = doc?.nome ?? (ehAudio(arquivo) ? 'Áudio da ligação' : ehTranscricao(arquivo) ? 'Transcrição' : null);
   if (!tipo) return { situacao: 'classificar' };
 
   const destino = DOCUMENTOS_PADRAO.find((d) => d.nome === tipo)!;
@@ -81,6 +82,12 @@ export function nomeFinal(tipo: string, ext: string): string {
 
 export function ehAudio(nome: string): boolean {
   return EXT_AUDIO.includes(extname(nome).toLowerCase());
+}
+
+/** Transcrição pronta da ligação: texto (txt/md/docx/pdf) com "transcri" no nome (Transcrição, transcricao, transcript…). */
+export function ehTranscricao(nome: string): boolean {
+  const doc = DOCUMENTOS_PADRAO.find((d) => d.nome === 'Transcrição')!;
+  return doc.extensoes.includes(extname(nome).toLowerCase()) && normalizar(basename(nome, extname(nome))).includes('transcri');
 }
 
 export function ehImagem(nome: string): boolean {

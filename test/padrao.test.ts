@@ -14,6 +14,7 @@ describe('padrão da pasta do cliente', () => {
       'Perguntas entrevista',
       'Áudio da ligação',
       'Entrevista preenchida',
+      'Transcrição',
     ]);
   });
 
@@ -53,7 +54,16 @@ describe('padrão da pasta do cliente', () => {
     expect(classificarCaminho('desktop.ini')).toEqual({ situacao: 'ignorar' });
     expect(classificarCaminho('_substituidos/RG.pdf')).toEqual({ situacao: 'ignorar' });
     expect(classificarCaminho('Revisar/x.pdf')).toEqual({ situacao: 'ignorar' });
-    expect(classificarCaminho('Transcrição.txt')).toEqual({ situacao: 'ignorar' });
+  });
+
+  it('transcrição pronta (txt, docx ou pdf com "transcri" no nome) é documento da Entrevista', () => {
+    expect(classificarCaminho('Transcrição.txt')).toEqual({ situacao: 'mover', tipo: 'Transcrição' });
+    expect(classificarCaminho('ligação/transcricao da entrevista.docx')).toEqual({ situacao: 'mover', tipo: 'Transcrição' });
+    expect(classificarCaminho('Transcript.pdf')).toEqual({ situacao: 'mover', tipo: 'Transcrição' });
+    expect(classificarCaminho('Entrevista/Transcrição.txt')).toEqual({ situacao: 'no-lugar', tipo: 'Transcrição' });
+    expect(classificarCaminho('Entrevista/Transcrição.docx')).toEqual({ situacao: 'no-lugar', tipo: 'Transcrição' });
+    expect(classificarCaminho('transcrição.jpg')).toEqual({ situacao: 'classificar' });
+    expect(nomeFinal('Transcrição', '.docx')).toBe('Entrevista/Transcrição.docx');
   });
 
   it('dá o caminho final de cada tipo', () => {

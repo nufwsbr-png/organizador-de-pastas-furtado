@@ -12,6 +12,12 @@ export interface Resposta {
   naoRespondida: boolean;
 }
 
+/** Pergunta feita na ligação que não está no roteiro, com a resposta do cliente. */
+export interface OutraPergunta {
+  pergunta: string;
+  resposta: string;
+}
+
 export const SCHEMA_RESPOSTAS = {
   type: 'object',
   properties: {
@@ -29,8 +35,20 @@ export const SCHEMA_RESPOSTAS = {
         additionalProperties: false,
       },
     },
+    outrasPerguntas: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          pergunta: { type: 'string' },
+          resposta: { type: 'string' },
+        },
+        required: ['pergunta', 'resposta'],
+        additionalProperties: false,
+      },
+    },
   },
-  required: ['respostas'],
+  required: ['respostas', 'outrasPerguntas'],
   additionalProperties: false,
 };
 
@@ -55,6 +73,12 @@ export function completarRespostas(perguntas: Pergunta[], vindas: Resposta[]): R
   });
 }
 
+export function limparOutrasPerguntas(vindas: OutraPergunta[]): OutraPergunta[] {
+  return vindas
+    .map((o) => ({ pergunta: String(o.pergunta ?? '').trim(), resposta: String(o.resposta ?? '').trim() }))
+    .filter((o) => o.pergunta && o.resposta);
+}
+
 export function etapaRespostas(provedor: () => Provedor): Etapa {
   return {
     nome: 'respostas',
@@ -70,9 +94,12 @@ export function etapaRespostas(provedor: () => Provedor): Etapa {
         imagens: [],
         cwd: ctx.pastaJob,
         nomeTarefa: 'respostas',
-      })) as { respostas: Resposta[] };
+      })) as { respostas: Resposta[]; outrasPerguntas?: OutraPergunta[] | null };
       const respostas = completarRespostas(perguntas, resultado.respostas ?? []);
+      const outras = limparOutrasPerguntas(resultado.outrasPerguntas ?? []);
+      writeFileSync(join(ctx.pastaJob, 'outras-perguntas.json'), JSON.stringify(outras, null, 2));
       writeFileSync(join(ctx.pastaJob, 'respostas.json'), JSON.stringify(respostas, null, 2));
+      if (outras.length > 0) ctx.log(`${outras.length} pergunta(s) feitas na ligação fora do roteiro anotadas em "Outras perguntas feitas".`);
       const semResposta = respostas.filter((r) => r.naoRespondida).length;
       ctx.log(semResposta > 0 ? `${respostas.length - semResposta} respondidas; ${semResposta} não abordada(s) na ligação.` : 'Todas as perguntas foram respondidas.');
       return { status: 'ok' };

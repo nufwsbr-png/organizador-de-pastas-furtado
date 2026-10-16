@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import PDFDocument from 'pdfkit';
 import type { Etapa } from '../job';
 import type { DadosCliente, Pergunta } from './perguntas';
-import type { Resposta } from './respostas';
+import type { OutraPergunta, Resposta } from './respostas';
 
 export interface DadosPdfEntrevista {
   destino: string;
@@ -11,6 +11,8 @@ export interface DadosPdfEntrevista {
   dadosCliente?: DadosCliente;
   perguntas: Pergunta[];
   respostas: Resposta[];
+  /** Perguntas feitas na ligação que não estão no roteiro. */
+  outrasPerguntas?: OutraPergunta[];
   transcricao: string;
   geradoEm?: Date;
 }
@@ -19,7 +21,7 @@ const NAO_ABORDADO = 'Não abordado na ligação.';
 
 /** Gera o PDF da entrevista preenchida: cabeçalho, perguntas por seção com as respostas e a transcrição em anexo. */
 export async function gerarPdfEntrevista(dados: DadosPdfEntrevista): Promise<void> {
-  const { destino, cliente, dadosCliente, perguntas, respostas, transcricao, geradoEm = new Date() } = dados;
+  const { destino, cliente, dadosCliente, perguntas, respostas, outrasPerguntas = [], transcricao, geradoEm = new Date() } = dados;
   const doc = new PDFDocument({ size: 'A4', margins: { top: 56, bottom: 56, left: 56, right: 56 }, info: { Title: `Entrevista - ${cliente}` } });
   const saida = doc.pipe(createWriteStream(destino));
 
@@ -64,6 +66,20 @@ export async function gerarPdfEntrevista(dados: DadosPdfEntrevista): Promise<voi
     doc.moveDown(0.8);
   }
 
+  if (outrasPerguntas.length > 0) {
+    doc.moveDown(0.5);
+    doc.font('Helvetica-Bold').fontSize(12).fillColor('#8a6d00').text('Outras perguntas feitas');
+    doc.fillColor('#000000');
+    doc.font('Helvetica-Oblique').fontSize(9.5).fillColor('#777777').text('Perguntas feitas na ligação que não estão no roteiro da entrevista.').fillColor('#000000');
+    doc.moveDown(0.3);
+    for (const o of outrasPerguntas) {
+      doc.font('Helvetica-Bold').fontSize(11).text(o.pergunta);
+      doc.moveDown(0.15);
+      doc.font('Helvetica').fontSize(10.5).text(o.resposta, { align: 'justify' });
+      doc.moveDown(0.8);
+    }
+  }
+
   doc.addPage();
   doc.font('Helvetica-Bold').fontSize(14).text('Anexo — Transcrição da ligação');
   doc.moveDown(0.5);
@@ -91,12 +107,15 @@ export function etapaPdfEntrevista(): Etapa {
       const transcricao = readFileSync(join(ctx.pastaJob, 'transcricao.txt'), 'utf8');
       const arquivoDados = join(ctx.pastaJob, 'dados-cliente.json');
       const dadosCliente = existsSync(arquivoDados) ? (JSON.parse(readFileSync(arquivoDados, 'utf8')) as DadosCliente) : undefined;
+      const arquivoOutras = join(ctx.pastaJob, 'outras-perguntas.json');
+      const outrasPerguntas = existsSync(arquivoOutras) ? (JSON.parse(readFileSync(arquivoOutras, 'utf8')) as OutraPergunta[]) : [];
       await gerarPdfEntrevista({
         destino: join(ctx.pastaJob, 'Entrevista preenchida.pdf'),
         cliente: ctx.job.nome,
         dadosCliente,
         perguntas,
         respostas,
+        outrasPerguntas,
         transcricao,
       });
       const semResposta = respostas.filter((r) => r.naoRespondida).length;
