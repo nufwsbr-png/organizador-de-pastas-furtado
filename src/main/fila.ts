@@ -2,7 +2,8 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from '
 import { basename, dirname, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
-export type EstadoJob = 'na-fila' | 'rodando' | 'pausado' | 'atencao' | 'concluido' | 'erro';
+/** `aguardando` = mandado organizar, esperando uma vaga (paralelismo); `rodando` = organizando agora. */
+export type EstadoJob = 'na-fila' | 'aguardando' | 'rodando' | 'pausado' | 'atencao' | 'concluido' | 'erro';
 export type NivelMensagem = 'info' | 'aviso' | 'erro';
 
 export interface Mensagem {
@@ -22,6 +23,8 @@ export interface Job {
   etapasPendentes: string[];
   mensagens: Mensagem[];
   motivo?: string;
+  /** Nome, e-mail ou link do cliente no ZapSign, quando o nome da pasta não serve para achar o envelope. */
+  buscaZapsign?: string;
   criadoEm: string;
   atualizadoEm: string;
 }
@@ -48,7 +51,7 @@ export class Fila {
         ...j,
         etapasPendentes: j.etapasPendentes ?? [],
         mensagens: j.mensagens ?? [],
-        estado: j.estado === 'rodando' ? 'na-fila' : j.estado,
+        estado: j.estado === 'rodando' || j.estado === 'aguardando' ? 'na-fila' : j.estado,
       }));
     } catch {
       this.jobs = [];

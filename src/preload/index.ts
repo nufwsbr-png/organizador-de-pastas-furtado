@@ -21,6 +21,8 @@ const api = {
     organizar: (id?: string) => ipcRenderer.invoke('jobs:organizar', id),
     remover: (id: string) => ipcRenderer.invoke('jobs:remover', id),
     refazer: (id: string) => ipcRenderer.invoke('jobs:refazer', id),
+    buscaZapsign: (id: string, busca: string) => ipcRenderer.invoke('jobs:buscaZapsign', id, busca),
+    limparConcluidas: () => ipcRenderer.invoke('jobs:limparConcluidas'),
     abrirPasta: (caminho: string) => ipcRenderer.invoke('jobs:abrirPasta', caminho),
     onMudar: (cb: (jobs: unknown) => void) => ouvir('jobs', cb),
   },
@@ -28,6 +30,8 @@ const api = {
     definir: (mudancas: Record<string, unknown>) => ipcRenderer.invoke('ajustes:definir', mudancas),
     chave: (chave: string) => ipcRenderer.invoke('ajustes:chave', chave),
     testarChave: () => ipcRenderer.invoke('ajustes:testarChave'),
+    tokenZapsign: (token: string) => ipcRenderer.invoke('ajustes:tokenZapsign', token),
+    testarZapsign: () => ipcRenderer.invoke('ajustes:testarZapsign'),
     abrirLogs: () => ipcRenderer.invoke('ajustes:abrirLogs'),
   },
   atualizacao: {

@@ -11,6 +11,7 @@ export interface EstadoApp {
   jobs: Job[];
   versao: string;
   chaveElevenLabs: string | null;
+  tokenZapsign: string | null;
   atualizacao: EstadoAtualizacao;
   arquivoEnv: string;
 }
@@ -31,6 +32,8 @@ export interface ApiTipada {
     organizar: (id?: string) => Promise<Job[]>;
     remover: (id: string) => Promise<Job[]>;
     refazer: (id: string) => Promise<Job[]>;
+    buscaZapsign: (id: string, busca: string) => Promise<Job[]>;
+    limparConcluidas: () => Promise<Job[]>;
     abrirPasta: (caminho: string) => Promise<string>;
     onMudar: (cb: (jobs: Job[]) => void) => () => void;
   };
@@ -38,6 +41,8 @@ export interface ApiTipada {
     definir: (mudancas: Partial<Ajustes>) => Promise<Ajustes>;
     chave: (chave: string) => Promise<string | null>;
     testarChave: () => Promise<{ ok: boolean; mensagem: string }>;
+    tokenZapsign: (token: string) => Promise<string | null>;
+    testarZapsign: () => Promise<{ ok: boolean; mensagem: string }>;
     abrirLogs: () => Promise<string>;
   };
   atualizacao: {

@@ -48,6 +48,11 @@ export class Orquestrador {
     rmSync(this.pastaJob(id), { recursive: true, force: true });
   }
 
+  /** Tira da lista as pastas concluídas (não mexe nos arquivos do cliente). */
+  limparConcluidas(): void {
+    for (const j of this.jobs()) if (j.estado === 'concluido' && !this.rodando.has(j.id)) this.remover(j.id);
+  }
+
   /** Apaga as saídas do job (menos a transcrição, que custa dinheiro) e coloca de volta na fila. */
   refazer(id: string): void {
     if (this.rodando.has(id)) throw new Error('Essa pasta está sendo organizada agora; espere terminar.');
@@ -67,7 +72,7 @@ export class Orquestrador {
     if (!job) return;
     this.rodando.add(id);
     this.semaforo.limite = Math.max(1, this.opcoes.paralelismo());
-    this.fila.atualizar(id, { estado: 'rodando', etapa: null, motivo: 'Aguardando a vez…' });
+    this.fila.atualizar(id, { estado: 'aguardando', etapa: null, motivo: undefined });
     try {
       this.opcoes.antesDeRodar?.(this.pastaJob(id));
       await this.semaforo.executar(() => executarJob(id, this.opcoes.etapas(), { fila: this.fila, pastaJob: this.pastaJob(id) }));

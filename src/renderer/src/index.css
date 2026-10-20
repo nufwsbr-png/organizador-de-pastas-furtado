@@ -1,30 +1,33 @@
-/* Identidade visual NuFws v1.1 (Desktop/ID Visual): fundo Preto Noite, ciano como único destaque,
-   degradê em um ponto por tela, Outfit nos títulos e DM Sans no resto. */
+/* ID visual Nufws v2.0 (pasta "ID Visual", identidade-visual.html): grafite como base, roxo como sinal,
+   uma seta pra frente. Outfit leve nos títulos, DM Sans no resto, um único ponto de degradê por tela. */
 @import './fonts/fontes.css';
 
 :root {
-  --preto: #05080e;
-  --noite: #0a1424;
-  --carvao: #0e1522;
-  --linha: #1a2233;
-  --ciano: #5fe0fb;
-  --ciano-claro: #93e2fd;
-  --violeta: #7c4df7;
-  --magenta: #f76be8;
-  --branco: #ffffff;
-  --gelo: #ebebec;
-  --cinza: #a4aeb9;
-  --cinza-apagado: #686d86;
-  --grad: linear-gradient(90deg, #5fe0fb 0%, #a1aff4 45%, #c79ff4 65%, #f76be8 100%);
-  --texto: 'DM Sans', system-ui, sans-serif;
+  --preto: #0d0b12; /* Grafite Base: fundo de tudo */
+  --noite: #12101a; /* meio-tom: atrás de cartões */
+  --carvao: #171522; /* Grafite Superfície: cartões e blocos */
+  --carvao-alto: #1d1a2b; /* cartão selecionado */
+  --linha: #2a2739; /* Grafite Linha: bordas e divisórias */
+  --branco: #ffffff; /* títulos */
+  --gelo: #edeaf5; /* Névoa: texto corrido */
+  --cinza: #9b8fc4; /* Cinza Texto: apoio, legenda e rótulos */
+  --cinza-2: #6e6793; /* cinza apagado: rótulo de canto, hora */
+  --indigo: #3a1078;
+  --roxo: #7b2ff7; /* botão, destaque e brilho; em texto só acima de 24 px */
+  --roxo-claro: #8f4bff;
+  --violeta: #b36bff; /* realce de texto pequeno, link, ícone, risco */
+  --lilas: #d8a5ff; /* ponta de luz e alerta */
+  --grad: linear-gradient(100deg, #3a1078 0%, #7b2ff7 55%, #d8a5ff 100%);
+  --grad-texto: linear-gradient(90deg, #7b2ff7 0%, #b36bff 55%, #d8a5ff 100%);
+  /* única cor de função fora da paleta: erro */
+  --erro: #ff6b8b;
   --titulo: 'Outfit', system-ui, sans-serif;
-  --bom: #5fe0fb;
-  --ruim: #f76be8;
-  --aviso: #c79ff4;
+  --texto: 'DM Sans', system-ui, sans-serif;
   font-family: var(--texto);
   color: var(--gelo);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 * {
@@ -36,35 +39,36 @@ body {
   overflow: hidden;
 }
 h1,
-h2 {
+h2,
+h3 {
   font-family: var(--titulo);
-  font-weight: 400;
+  font-weight: 500;
+  letter-spacing: -0.02em;
   color: var(--branco);
   margin: 0;
+  line-height: 1.15;
 }
 h1 {
-  font-size: 22px;
-  letter-spacing: -0.01em;
+  font-size: 19px;
 }
 h2 {
   font-size: 18px;
-  font-weight: 500;
   margin-bottom: 6px;
 }
 p {
   margin: 6px 0;
 }
 .sub,
-.detalhe,
 .caminho {
   color: var(--cinza);
   font-size: 13px;
 }
 .caminho {
   font-size: 12px;
-  color: var(--cinza-apagado);
+  color: var(--cinza-2);
   word-break: break-all;
 }
+/* Rótulo: DM Sans 500, caixa alta, espaço 0,3em */
 .rotulo {
   font-size: 11px;
   letter-spacing: 0.3em;
@@ -72,105 +76,148 @@ p {
   color: var(--cinza);
   font-weight: 500;
 }
+/* Eyebrow: rótulo com o risco violeta de 36 px embaixo (marca começo de bloco) */
+.eyebrow::after {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 2px;
+  background: var(--violeta);
+  margin-top: 12px;
+}
+.mini {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--violeta);
+  font-weight: 600;
+}
 .destaque {
-  background: var(--grad);
+  background: var(--grad-texto);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 code {
   font-size: 12px;
-  background: var(--noite);
+  background: var(--preto);
   border: 1px solid var(--linha);
-  padding: 1px 5px;
-  border-radius: 4px;
+  padding: 1px 6px;
+  border-radius: 6px;
   color: var(--gelo);
 }
 ::selection {
-  background: var(--ciano);
-  color: var(--preto);
+  background: var(--roxo);
+  color: var(--branco);
 }
 
-/* Botões: principal = pílula ciano com texto preto; secundário = contorno */
+/* Botões: principal = pílula roxa com texto branco (e seta nos de ação); secundário = contorno branco */
 button {
   font: inherit;
-  font-weight: 600;
-  padding: 8px 16px;
+  font-weight: 500;
+  padding: 8px 18px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   background: transparent;
   cursor: pointer;
   color: var(--branco);
-  transition: border-color 0.15s, background 0.15s, opacity 0.15s;
+  white-space: nowrap;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, opacity 0.15s, box-shadow 0.15s;
 }
 button:hover:not(:disabled) {
   border-color: var(--branco);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--violeta);
+  outline-offset: 2px;
 }
 button:disabled {
-  opacity: 0.35;
+  opacity: 0.38;
   cursor: default;
 }
 button.primario {
-  background: var(--ciano);
-  border-color: var(--ciano);
-  color: var(--preto);
+  background: var(--roxo);
+  border-color: var(--roxo);
+  color: var(--branco);
+  font-weight: 600;
+  box-shadow: 0 0 22px rgba(123, 47, 247, 0.3);
 }
 button.primario:hover:not(:disabled) {
-  background: var(--ciano-claro);
-  border-color: var(--ciano-claro);
+  background: var(--roxo-claro);
+  border-color: var(--roxo-claro);
+  box-shadow: 0 0 30px rgba(123, 47, 247, 0.45);
+}
+button.primario:disabled {
+  box-shadow: none;
+}
+.seta {
+  font-family: var(--titulo);
+  margin-left: 10px;
 }
 button.discreto {
   border-color: transparent;
   color: var(--cinza);
-  font-weight: 500;
 }
 button.discreto:hover:not(:disabled) {
   color: var(--branco);
   border-color: var(--linha);
+  background: transparent;
 }
 button.perigo {
-  color: var(--magenta);
+  color: var(--erro);
+}
+button.pequeno {
+  padding: 3px 10px;
+  font-size: 12px;
 }
 button.link {
   border: none;
   background: none;
-  color: var(--ciano);
+  color: var(--violeta);
   padding: 0;
-  font-weight: 500;
+}
+button.link:hover:not(:disabled) {
+  background: none;
+  color: var(--lilas);
 }
 input,
 select {
   font: inherit;
   padding: 8px 12px;
   border: 1px solid var(--linha);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--noite);
   color: var(--gelo);
 }
 input:focus,
 select:focus {
   outline: none;
-  border-color: var(--ciano);
+  border-color: var(--violeta);
 }
 input {
   min-width: 320px;
 }
+input::placeholder {
+  color: var(--cinza-2);
+}
 select option {
-  background: var(--noite);
+  background: var(--carvao);
 }
 .erro {
-  color: var(--magenta);
-  background: rgba(247, 107, 232, 0.08);
-  border: 1px solid rgba(247, 107, 232, 0.35);
+  color: var(--erro);
+  background: rgba(255, 107, 139, 0.08);
+  border: 1px solid rgba(255, 107, 139, 0.35);
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 .bom {
-  color: var(--ciano);
+  color: var(--violeta);
 }
 .ruim {
-  color: var(--magenta);
+  color: var(--lilas);
 }
 .carregando {
   padding: 40px;
@@ -178,103 +225,134 @@ select option {
 }
 .aviso-flutuante {
   position: fixed;
-  top: 12px;
-  right: 12px;
-  background: var(--carvao);
+  top: 14px;
+  right: 14px;
+  background: var(--carvao-alto);
   border: 1px solid var(--linha);
+  border-left: 2px solid var(--violeta);
   color: var(--gelo);
   padding: 10px 14px;
-  border-radius: 10px;
+  border-radius: 12px;
   z-index: 10;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
 }
 
-/* Mancha de fundo (fraca) e linha em degradê: um ponto de degradê por tela */
+/* Mancha de fundo: brilho grande e desfocado no canto, fraco, nunca atrás de texto pequeno */
 .mancha {
   position: fixed;
-  width: 520px;
-  height: 520px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(95, 224, 251, 0.14) 0%, rgba(95, 224, 251, 0) 70%);
+  filter: blur(90px);
   pointer-events: none;
   z-index: 0;
 }
+.mancha-roxa {
+  width: 520px;
+  height: 520px;
+  background: var(--roxo);
+  right: -160px;
+  top: -200px;
+  opacity: 0.22;
+}
+.mancha-indigo {
+  width: 480px;
+  height: 480px;
+  background: var(--indigo);
+  right: 200px;
+  bottom: -300px;
+  opacity: 0.45;
+}
+/* Linha em degradê: uma por tela, entra e sai do quadro */
 .linha-grad {
-  height: 1px;
+  height: 2px;
   background: var(--grad);
-  box-shadow: 0 0 12px rgba(95, 224, 251, 0.35);
+  box-shadow: 0 0 14px rgba(123, 47, 247, 0.55), 0 0 26px rgba(216, 165, 255, 0.18);
+  position: relative;
+  z-index: 1;
 }
 
-/* Logo */
-.marca {
+/* Logo: símbolo + nome Nufws (Outfit 600, só o N maiúsculo) + descritor */
+.logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
-.marca img {
-  height: 26px;
-  width: auto;
+.logo img {
+  width: 46px;
+  height: 46px;
   display: block;
 }
-.marca-nome {
+.logo .nome {
   font-family: var(--titulo);
   font-weight: 600;
-  font-size: 18px;
+  font-size: 34px;
+  letter-spacing: -0.025em;
+  line-height: 1;
   color: var(--branco);
 }
-.marca-nome small {
+.logo .nome small {
   display: block;
   font-family: var(--texto);
-  font-weight: 500;
+  font-weight: 400;
   font-size: 10px;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.26em;
   text-transform: uppercase;
   color: var(--cinza);
+  margin-top: 7px;
 }
 
 /* Login */
 .tela-login {
   position: relative;
   z-index: 1;
-  max-width: 920px;
+  height: 100vh;
+  overflow-y: auto;
+}
+.tela-login-conteudo {
+  max-width: 940px;
   margin: 0 auto;
-  padding: 56px 24px 24px;
+  padding: 44px 28px 28px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
-.tela-login header {
-  margin-bottom: 36px;
+.tela-login .logo {
+  margin-bottom: 52px;
 }
-.tela-login .marca {
-  margin-bottom: 36px;
+.tela-login header {
+  margin-bottom: 34px;
 }
 .tela-login h1 {
-  font-size: 40px;
+  font-size: 50px;
   font-weight: 300;
-  line-height: 1.1;
-  margin-bottom: 10px;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  margin: 24px 0 16px;
+}
+.tela-login h1 strong {
+  font-weight: 500;
 }
 .tela-login header p {
   color: var(--cinza);
-  font-size: 15px;
-  max-width: 560px;
+  font-size: 16px;
+  font-weight: 300;
+  max-width: 680px;
 }
 .cartoes {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 18px;
 }
 .cartao {
   background: var(--carvao);
   border: 1px solid var(--linha);
-  border-radius: 14px;
-  padding: 22px;
+  border-radius: 18px;
+  padding: 24px 26px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 .cartao-ativo {
-  border-color: var(--ciano);
+  border-color: rgba(123, 47, 247, 0.7);
 }
 .cartao .acoes {
   display: flex;
@@ -288,70 +366,159 @@ select option {
 .rodape {
   margin-top: auto;
   padding-top: 28px;
-  color: var(--cinza-apagado);
+  color: var(--cinza-2);
   font-size: 12.5px;
 }
 
-/* Principal */
+/* Barra do topo */
 .barra {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 20px;
+  gap: 16px;
+  padding: 12px 20px;
   background: var(--preto);
-  border-bottom: 1px solid var(--linha);
   position: relative;
   z-index: 1;
+  height: 64px;
 }
 .barra .acoes {
   display: flex;
   gap: 8px;
   align-items: center;
 }
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.marca .simbolo {
+  width: 32px;
+  height: 32px;
+  display: block;
+  flex-shrink: 0;
+}
+.marca-sub {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--cinza);
+  white-space: nowrap;
+}
+.marca-sub span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ponto {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cinza-2);
+  display: inline-block;
+  flex-shrink: 0;
+}
+.ponto-ok {
+  background: var(--violeta);
+}
+.ponto-falta {
+  background: var(--lilas);
+  box-shadow: 0 0 0 2px rgba(216, 165, 255, 0.2);
+}
+
+/* Principal */
 .tela-principal .erro {
   margin: 12px 20px;
 }
 .vazio {
   text-align: center;
   color: var(--cinza);
-  margin-top: 120px;
+  margin: 110px auto 0;
+  max-width: 540px;
   position: relative;
   z-index: 1;
 }
+.vazio img {
+  width: 64px;
+  margin-bottom: 18px;
+  filter: drop-shadow(0 0 24px rgba(123, 47, 247, 0.35));
+}
 .vazio h2 {
+  font-size: 34px;
   font-weight: 300;
-  font-size: 28px;
-  color: var(--branco);
+  letter-spacing: -0.03em;
+  margin-bottom: 12px;
 }
 .colunas {
   display: grid;
-  grid-template-columns: 340px 1fr;
-  height: calc(100vh - 61px);
+  grid-template-columns: 360px 1fr;
+  height: calc(100vh - 66px);
   position: relative;
   z-index: 1;
 }
 .lista-jobs {
-  list-style: none;
   margin: 0;
-  padding: 12px;
+  padding: 16px 12px 24px;
   overflow-y: auto;
   border-right: 1px solid var(--linha);
-  background: var(--preto);
+  background: var(--noite);
+}
+.grupo + .grupo {
+  margin-top: 20px;
+}
+.grupo-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 9px;
+}
+.grupo-cabecalho .rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.contagem {
+  font-size: 11px;
+  letter-spacing: 0;
+  color: var(--gelo);
+  background: var(--carvao);
+  border: 1px solid var(--linha);
+  border-radius: 999px;
+  padding: 0 8px;
+}
+.grupo-nota {
+  font-size: 12px;
+  color: var(--cinza);
+  white-space: nowrap;
+}
+.grupo ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.grupo-vazio {
+  font-size: 12.5px;
+  color: var(--cinza-2);
+  padding: 2px 4px 4px;
 }
 .job {
   background: var(--carvao);
   border: 1px solid var(--linha);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 12px 14px;
   margin-bottom: 8px;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, background 0.15s;
 }
 .job:hover {
-  border-color: #2a3550;
+  border-color: #3a3550;
 }
 .job-selecionado {
-  border-color: var(--ciano) !important;
+  border-color: rgba(123, 47, 247, 0.75) !important;
+  background: var(--carvao-alto);
 }
 .job-linha {
   display: flex;
@@ -361,8 +528,8 @@ select option {
 }
 .job-nome {
   font-family: var(--titulo);
-  font-weight: 500;
-  font-size: 15px;
+  font-weight: 400;
+  font-size: 15.5px;
   color: var(--branco);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -377,8 +544,11 @@ select option {
   white-space: nowrap;
 }
 .etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 10.5px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   font-weight: 500;
   padding: 3px 9px;
@@ -386,27 +556,42 @@ select option {
   border: 1px solid var(--linha);
   color: var(--cinza);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 .etiqueta-rodando {
-  border-color: var(--ciano);
-  color: var(--ciano);
+  border-color: rgba(123, 47, 247, 0.7);
+  background: rgba(123, 47, 247, 0.16);
+  color: var(--gelo);
+}
+.etiqueta-rodando::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--violeta);
+  animation: pulsar 1.2s ease-in-out infinite;
 }
 .etiqueta-concluido {
-  border-color: var(--ciano);
-  background: var(--ciano);
-  color: var(--preto);
+  border-color: rgba(179, 107, 255, 0.45);
+  color: var(--violeta);
 }
 .etiqueta-atencao,
 .etiqueta-pausado {
-  border-color: var(--aviso);
-  color: var(--aviso);
+  border-color: rgba(216, 165, 255, 0.55);
+  background: rgba(216, 165, 255, 0.08);
+  color: var(--lilas);
 }
 .etiqueta-erro {
-  border-color: var(--magenta);
-  color: var(--magenta);
+  border-color: rgba(255, 107, 139, 0.55);
+  color: var(--erro);
+}
+@keyframes pulsar {
+  50% {
+    opacity: 0.25;
+  }
 }
 .barra-progresso {
-  height: 3px;
+  height: 4px;
   background: var(--linha);
   border-radius: 2px;
   margin-top: 10px;
@@ -414,26 +599,40 @@ select option {
 }
 .barra-progresso div {
   height: 100%;
-  background: var(--ciano);
+  border-radius: 2px;
+  background: var(--roxo);
   transition: width 0.3s;
 }
+.job-atencao .barra-progresso div,
+.job-pausado .barra-progresso div {
+  background: var(--lilas);
+}
+.job-erro .barra-progresso div {
+  background: var(--erro);
+}
+
 .detalhe {
-  padding: 18px 22px;
+  padding: 22px 26px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   background: var(--preto);
 }
-.detalhe-cabecalho {
+.detalhe-topo {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
 }
+.detalhe-topo .rotulo {
+  padding-top: 6px;
+}
 .detalhe-cabecalho h2 {
-  font-size: 24px;
-  font-weight: 400;
+  font-size: 30px;
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  margin: 10px 0 4px;
 }
 .detalhe-cabecalho .acoes {
   display: flex;
@@ -442,15 +641,30 @@ select option {
   justify-content: flex-end;
 }
 .motivo {
-  padding: 12px 14px;
-  border-radius: 10px;
+  padding: 12px 16px;
+  border-radius: 14px;
   background: var(--carvao);
   border: 1px solid var(--linha);
-  border-left: 3px solid var(--aviso);
+  border-left: 2px solid var(--lilas);
   color: var(--gelo);
 }
 .motivo-erro {
-  border-left-color: var(--magenta);
+  border-left-color: var(--erro);
+}
+.caixa-zapsign {
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--carvao);
+  border: 1px solid var(--linha);
+}
+.caixa-zapsign .sub {
+  margin-top: 8px;
+}
+.caixa-zapsign .linha {
+  margin-top: 8px;
+}
+.caixa-zapsign input {
+  flex: 1;
 }
 .etapas {
   display: flex;
@@ -462,36 +676,36 @@ select option {
 }
 .etapas li {
   font-size: 11px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   font-weight: 500;
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid var(--linha);
-  color: var(--cinza-apagado);
+  color: var(--cinza-2);
 }
 .etapas li.feita {
-  border-color: rgba(95, 224, 251, 0.5);
-  color: var(--ciano);
+  border-color: rgba(179, 107, 255, 0.45);
+  color: var(--violeta);
 }
 .etapas li.atual {
-  border-color: var(--ciano);
-  background: var(--ciano);
-  color: var(--preto);
+  border-color: var(--roxo);
+  background: var(--roxo);
+  color: var(--branco);
 }
 .etapas li.pendente {
-  border-color: var(--aviso);
-  color: var(--aviso);
+  border-color: rgba(216, 165, 255, 0.55);
+  color: var(--lilas);
 }
 .chat {
   background: var(--carvao);
   border: 1px solid var(--linha);
-  border-radius: 12px;
-  padding: 12px 14px;
+  border-radius: 18px;
+  padding: 14px 18px;
   flex: 1;
   min-height: 200px;
   overflow-y: auto;
-  font-size: 13px;
+  font-size: 13.5px;
 }
 .msg {
   display: flex;
@@ -499,15 +713,15 @@ select option {
   padding: 4px 0;
 }
 .msg .hora {
-  color: var(--cinza-apagado);
+  color: var(--cinza-2);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
 .msg-aviso {
-  color: var(--aviso);
+  color: var(--lilas);
 }
 .msg-erro {
-  color: var(--magenta);
+  color: var(--erro);
 }
 
 /* Ajustes */
@@ -517,12 +731,21 @@ select option {
   position: relative;
   z-index: 1;
 }
+.tela-ajustes .conteudo {
+  max-width: 900px;
+  padding: 8px 0 32px;
+}
 .tela-ajustes section {
   background: var(--carvao);
   border: 1px solid var(--linha);
-  border-radius: 14px;
-  padding: 18px 22px;
+  border-radius: 18px;
+  padding: 20px 24px;
   margin: 16px 20px;
+}
+.detalhe-texto {
+  color: var(--cinza);
+  font-size: 13px;
+  margin-top: 10px;
 }
 .linha {
   display: flex;

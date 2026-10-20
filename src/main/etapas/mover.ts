@@ -11,7 +11,7 @@ export interface Feito {
 }
 
 /** Tira um arquivo do caminho sem apagar: vai para _substituidos/<caminho relativo>. */
-function guardarEmSubstituidos(pastaCliente: string, relativo: string, feitos: Feito[]): void {
+export function guardarEmSubstituidos(pastaCliente: string, relativo: string, feitos: Feito[]): void {
   const origem = join(pastaCliente, relativo);
   if (!existsSync(origem)) return;
   let destinoRel = `_substituidos/${relativo}`;

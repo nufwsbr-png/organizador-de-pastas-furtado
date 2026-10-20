@@ -12,6 +12,7 @@ export interface Ajustes {
 
 const PADRAO: Ajustes = { provedor: null, paralelismo: 3 };
 const CHAVE_ELEVENLABS = 'ELEVENLABS_API_KEY';
+const TOKEN_ZAPSIGN = 'ZAPSIGN_API_TOKEN';
 
 /** Ajustes do app (settings.json) e segredos (.env) guardados na pasta de dados do usuário. */
 export class Config {
@@ -52,22 +53,38 @@ export class Config {
   }
 
   chaveElevenLabs(): string | null {
+    return this.segredo(CHAVE_ELEVENLABS);
+  }
+
+  definirChaveElevenLabs(chave: string): void {
+    this.definirSegredo(CHAVE_ELEVENLABS, chave);
+  }
+
+  tokenZapsign(): string | null {
+    return this.segredo(TOKEN_ZAPSIGN);
+  }
+
+  definirTokenZapsign(token: string): void {
+    this.definirSegredo(TOKEN_ZAPSIGN, token);
+  }
+
+  private segredo(nome: string): string | null {
     for (const arquivo of [this.arquivoEnv, ...this.envsReserva]) {
-      const valor = lerEnv(arquivo)[CHAVE_ELEVENLABS]?.trim();
+      const valor = lerEnv(arquivo)[nome]?.trim();
       if (valor) return valor;
     }
     return null;
   }
 
-  /** Grava (ou apaga, se vazia) a chave no .env do app, preservando as outras linhas. */
-  definirChaveElevenLabs(chave: string): void {
-    const valor = chave.trim();
+  /** Grava (ou apaga, se vazio) o segredo no .env do app, preservando as outras linhas. */
+  private definirSegredo(nome: string, valor: string): void {
+    const limpo = valor.trim();
     const linhas = existsSync(this.arquivoEnv)
       ? readFileSync(this.arquivoEnv, 'utf8').split(/\r?\n/)
       : [];
-    const semChave = linhas.filter((l) => !l.trim().startsWith(`${CHAVE_ELEVENLABS}=`));
+    const semChave = linhas.filter((l) => !l.trim().startsWith(`${nome}=`));
     while (semChave.length > 0 && semChave[semChave.length - 1] === '') semChave.pop();
-    if (valor) semChave.push(`${CHAVE_ELEVENLABS}=${valor}`);
+    if (limpo) semChave.push(`${nome}=${limpo}`);
     writeFileSync(this.arquivoEnv, semChave.join('\n') + '\n');
   }
 

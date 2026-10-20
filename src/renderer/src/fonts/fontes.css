@@ -1,7 +1,4 @@
-@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url('./DMSans-400.woff2') format('woff2'); }
-@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 500; font-display: swap; src: url('./DMSans-500.woff2') format('woff2'); }
-@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 600; font-display: swap; src: url('./DMSans-600.woff2') format('woff2'); }
-@font-face { font-family: 'Outfit'; font-style: normal; font-weight: 300; font-display: swap; src: url('./Outfit-300.woff2') format('woff2'); }
-@font-face { font-family: 'Outfit'; font-style: normal; font-weight: 400; font-display: swap; src: url('./Outfit-400.woff2') format('woff2'); }
-@font-face { font-family: 'Outfit'; font-style: normal; font-weight: 500; font-display: swap; src: url('./Outfit-500.woff2') format('woff2'); }
-@font-face { font-family: 'Outfit'; font-style: normal; font-weight: 600; font-display: swap; src: url('./Outfit-600.woff2') format('woff2'); }
+/* Fontes do ID visual Nufws (pasta ID Visual): Outfit nos títulos e DM Sans no resto.
+   Variáveis (um arquivo cobre todos os pesos) e só com os caracteres latinos: funcionam sem internet. */
+@font-face { font-family: 'Outfit'; font-style: normal; font-weight: 100 900; font-display: swap; src: url('./Outfit-variavel.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 100 1000; font-display: swap; src: url('./DMSans-variavel.woff2') format('woff2'); }

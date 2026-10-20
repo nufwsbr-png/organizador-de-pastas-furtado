@@ -11,7 +11,9 @@ import { etapaPdfEntrevista } from './etapas/pdf-entrevista';
 import { etapaPerguntas } from './etapas/perguntas';
 import { etapaRespostas } from './etapas/respostas';
 import { etapaTranscricao } from './etapas/transcricao';
+import { etapaZapsign } from './etapas/zapsign';
 import { transcreverElevenLabs } from './ferramentas/elevenlabs';
+import { ClienteZapsign } from './ferramentas/zapsign';
 import type { Job } from './fila';
 import { ErroPausa, type Etapa } from './job';
 import { Orquestrador } from './orquestrador';
@@ -36,6 +38,7 @@ function log(texto: string): void {
 }
 
 const config = new Config(userData, [join(app.getAppPath(), '.env'), join(process.cwd(), '.env')]);
+const zapsign = new ClienteZapsign({ token: () => config.tokenZapsign(), arquivoIndice: join(userData, 'zapsign-indice.json'), log });
 const pastaBin = join(userData, 'bin');
 const TIMEOUT_IA = 25 * 60_000;
 
@@ -75,6 +78,7 @@ function etapaInventario(): Etapa {
 function montarEtapas(): Etapa[] {
   return [
     etapaInventario(),
+    etapaZapsign(() => (config.tokenZapsign() ? zapsign : null)),
     etapaTranscricao({ chave: () => config.chaveElevenLabs(), transcrever: (arquivo, chave) => transcreverElevenLabs(arquivo, chave) }),
     etapaPerguntas(provedorAtual),
     etapaRespostas(provedorAtual),
@@ -113,6 +117,7 @@ function criarJanela(): void {
     minHeight: 600,
     show: !arquivoCaptura,
     title: 'Organizador de Pastas Furtado',
+    backgroundColor: '#0D0B12',
     autoHideMenuBar: true,
     webPreferences: { preload: join(import.meta.dirname, '../preload/index.mjs'), sandbox: false, contextIsolation: true },
   });
@@ -153,6 +158,7 @@ function estado() {
     jobs: orquestrador.jobs(),
     versao: app.getVersion(),
     chaveElevenLabs: mascarar(config.chaveElevenLabs()),
+    tokenZapsign: mascarar(config.tokenZapsign()),
     atualizacao: atualizador?.estado() ?? ({ estado: 'dev' } as EstadoAtualizacao),
     arquivoEnv: config.caminhoEnv(),
   };
@@ -196,6 +202,15 @@ function registrarIpc(): void {
     orquestrador.refazer(id);
     return orquestrador.jobs();
   });
+  ipcMain.handle('jobs:buscaZapsign', (_e, id: string, busca: string) => {
+    orquestrador.fila.atualizar(id, { buscaZapsign: busca.trim() || undefined });
+    orquestrador.organizar(id).catch((erro) => log(`organizar falhou: ${erro}`));
+    return orquestrador.jobs();
+  });
+  ipcMain.handle('jobs:limparConcluidas', () => {
+    orquestrador.limparConcluidas();
+    return orquestrador.jobs();
+  });
   ipcMain.handle('jobs:abrirPasta', (_e, caminho: string) => shell.openPath(caminho));
 
   ipcMain.handle('ajustes:definir', (_e, mudancas: Partial<Ajustes>) => config.definir(mudancas));
@@ -214,6 +229,18 @@ function registrarIpc(): void {
       return { ok: true, mensagem: `Chave válida${dados.subscription?.tier ? ` (plano ${dados.subscription.tier})` : ''}.` };
     } catch (erro) {
       return { ok: false, mensagem: `Não consegui falar com o ElevenLabs: ${erro instanceof Error ? erro.message : String(erro)}` };
+    }
+  });
+  ipcMain.handle('ajustes:tokenZapsign', (_e, token: string) => {
+    config.definirTokenZapsign(token);
+    return mascarar(config.tokenZapsign());
+  });
+  ipcMain.handle('ajustes:testarZapsign', async () => {
+    if (!config.tokenZapsign()) return { ok: false, mensagem: 'Nenhum token salvo.' };
+    try {
+      return { ok: true, mensagem: await zapsign.testar() };
+    } catch (erro) {
+      return { ok: false, mensagem: erro instanceof Error ? erro.message : String(erro) };
     }
   });
   ipcMain.handle('ajustes:abrirLogs', () => shell.openPath(userData));
@@ -242,6 +269,8 @@ if (!app.requestSingleInstanceLock()) {
     if (!arquivoCaptura) {
       orquestrador.retomarPendentes().catch((erro) => log(`retomar falhou: ${erro}`));
       setTimeout(() => atualizador?.buscar(), 5_000);
+      // deixa o índice do ZapSign pronto antes da primeira pasta precisar dele
+      if (config.tokenZapsign()) setTimeout(() => zapsign.sincronizar().catch((erro) => log(`zapsign: ${erro}`)), 3_000);
     }
   });
 

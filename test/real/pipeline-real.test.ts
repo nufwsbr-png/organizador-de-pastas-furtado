@@ -1,4 +1,5 @@
 // Pipeline completo numa CÓPIA da pasta real da Elisângela. Só roda com TESTE_REAL=1 (usa a assinatura e, se houver, a chave do ElevenLabs).
+// A cópia perde a procuração, a declaração e o contrato: o ZapSign (token no .env) tem de trazê-los de volta iguais.
 import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -11,7 +12,9 @@ import { etapaPdfEntrevista } from '../../src/main/etapas/pdf-entrevista';
 import { etapaPerguntas } from '../../src/main/etapas/perguntas';
 import { etapaRespostas } from '../../src/main/etapas/respostas';
 import { etapaTranscricao } from '../../src/main/etapas/transcricao';
+import { etapaZapsign } from '../../src/main/etapas/zapsign';
 import { transcreverElevenLabs } from '../../src/main/ferramentas/elevenlabs';
+import { ClienteZapsign } from '../../src/main/ferramentas/zapsign';
 import type { Etapa } from '../../src/main/job';
 import { Orquestrador } from '../../src/main/orquestrador';
 import { ProvedorClaude } from '../../src/main/provedores/claude';
@@ -23,6 +26,7 @@ const REAL = process.env.TESTE_REAL === '1';
 const ORIGEM = process.env.PASTA_ORIGEM ?? 'C:\\Users\\Computador08\\Downloads\\Elisângela Cristina Mariano';
 const PROVEDOR = (process.env.PROVEDOR ?? 'claude') as 'claude' | 'codex';
 const DESTINO = process.env.PASTA_DESTINO;
+const ASSINADOS = ['Contratos/Procuração.pdf', 'Contratos/Declaração.pdf', 'Não juntar/Contrato Trabalhista.pdf'];
 
 describe.skipIf(!REAL || !existsSync(ORIGEM))('pipeline real', () => {
   it('organiza uma cópia da pasta da Elisângela', async () => {
@@ -30,9 +34,11 @@ describe.skipIf(!REAL || !existsSync(ORIGEM))('pipeline real', () => {
     const cliente = join(base, 'Elisângela Cristina Mariano');
     if (existsSync(cliente)) rmSync(cliente, { recursive: true, force: true });
     cpSync(ORIGEM, cliente, { recursive: true });
+    for (const rel of ASSINADOS) rmSync(join(cliente, rel), { force: true });
     console.log('cópia em', cliente);
 
     const config = new Config(join(base, 'userData'), [join(process.cwd(), '.env')]);
+    const zapsign = new ClienteZapsign({ token: () => config.tokenZapsign(), arquivoIndice: join(base, 'userData', 'zapsign-indice.json') });
     const exe = localizarExecutavel(PROVEDOR)!;
     const provedor = (): Provedor =>
       PROVEDOR === 'claude' ? new ProvedorClaude({ executavel: exe, timeoutMs: 25 * 60_000 }) : new ProvedorCodex({ executavel: exe, timeoutMs: 25 * 60_000 });
@@ -45,6 +51,7 @@ describe.skipIf(!REAL || !existsSync(ORIGEM))('pipeline real', () => {
           return { status: 'ok' };
         },
       },
+      etapaZapsign(() => (config.tokenZapsign() ? zapsign : null)),
       etapaTranscricao({ chave: () => config.chaveElevenLabs(), transcrever: (a, k) => transcreverElevenLabs(a, k) }),
       etapaPerguntas(provedor),
       etapaRespostas(provedor),
@@ -72,6 +79,6 @@ describe.skipIf(!REAL || !existsSync(ORIGEM))('pipeline real', () => {
     expect(['concluido', 'atencao']).toContain(final.estado);
     expect(existsSync(join(cliente, 'Entrevista', 'Perguntas entrevista.pdf'))).toBe(true);
     expect(existsSync(join(cliente, 'Entrevista', 'Áudio da ligação.wav'))).toBe(true);
-    expect(existsSync(join(cliente, 'Contratos', 'Procuração.pdf'))).toBe(true);
+    for (const rel of ASSINADOS) expect(readFileSync(join(cliente, rel)).equals(readFileSync(join(ORIGEM, rel)))).toBe(true);
   }, 40 * 60_000);
 });
