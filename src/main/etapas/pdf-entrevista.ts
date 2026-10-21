@@ -2,6 +2,7 @@ import { createWriteStream, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import PDFDocument from 'pdfkit';
 import type { Etapa } from '../job';
+import { nomeDoCliente } from './cliente';
 import type { DadosCliente, Pergunta } from './perguntas';
 import type { OutraPergunta, Resposta } from './respostas';
 
@@ -31,12 +32,15 @@ export async function gerarPdfEntrevista(dados: DadosPdfEntrevista): Promise<voi
   doc.moveDown(0.3);
   doc.font('Helvetica').fontSize(10).fillColor('#444444');
   const linhasCabecalho = [
+    dadosCliente?.telefone ? `Telefone: ${dadosCliente.telefone}` : null,
     dadosCliente?.empresa ? `Empresa: ${dadosCliente.empresa}` : null,
     dadosCliente?.cargo ? `Cargo: ${dadosCliente.cargo}` : null,
     dadosCliente?.vinculo ? `Vínculo: ${dadosCliente.vinculo}` : null,
     dadosCliente?.salario ? `Salário: ${dadosCliente.salario}` : null,
     `Preenchido automaticamente a partir da transcrição da ligação em ${geradoEm.toLocaleDateString('pt-BR')}.`,
-    'As respostas usam somente o que o cliente disse na ligação; confira antes de usar.',
+    perguntas.some((p) => p.respostaNoPdf)
+      ? 'Os dados que já vinham no documento da entrevista foram mantidos; as demais respostas usam somente o que o cliente disse na ligação. Confira antes de usar.'
+      : 'As respostas usam somente o que o cliente disse na ligação; confira antes de usar.',
   ].filter((l): l is string => Boolean(l));
   for (const l of linhasCabecalho) doc.text(l);
   doc.fillColor('#000000');
@@ -111,7 +115,7 @@ export function etapaPdfEntrevista(): Etapa {
       const outrasPerguntas = existsSync(arquivoOutras) ? (JSON.parse(readFileSync(arquivoOutras, 'utf8')) as OutraPergunta[]) : [];
       await gerarPdfEntrevista({
         destino: join(ctx.pastaJob, 'Entrevista preenchida.pdf'),
-        cliente: ctx.job.nome,
+        cliente: nomeDoCliente(ctx),
         dadosCliente,
         perguntas,
         respostas,

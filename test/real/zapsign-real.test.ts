@@ -1,8 +1,8 @@
 // ZapSign de verdade (só leitura). Só roda com TESTE_REAL=1 e ZAPSIGN_API_TOKEN no .env do projeto.
-// Copia a pasta da Elisângela SEM os três assinados, roda a etapa e confere byte a byte com os originais.
+// Copia a pasta PASTA_ORIGEM (um cliente com os três assinados) SEM eles, roda a etapa e confere byte a byte com os originais.
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { Config } from '../../src/main/config';
 import { inventariar } from '../../src/main/etapas/inventario';
 import { etapaZapsign } from '../../src/main/etapas/zapsign';
@@ -10,13 +10,13 @@ import { ClienteZapsign } from '../../src/main/ferramentas/zapsign';
 import { Fila } from '../../src/main/fila';
 
 const REAL = process.env.TESTE_REAL === '1';
-const ORIGEM = process.env.PASTA_ORIGEM ?? 'C:\\Users\\Computador08\\Downloads\\Elisângela Cristina Mariano';
+const ORIGEM = process.env.PASTA_ORIGEM ?? '';
 const ASSINADOS = ['Contratos/Procuração.pdf', 'Contratos/Declaração.pdf', 'Não juntar/Contrato Trabalhista.pdf'];
 
 describe.skipIf(!REAL || !existsSync(ORIGEM))('ZapSign real', () => {
-  it('acha o envelope da Elisângela e baixa os três assinados iguais aos originais', async () => {
+  it('acha o envelope do cliente e baixa os três assinados iguais aos originais', async () => {
     const base = mkdtempSync(join(tmpdir(), 'zapsign-real-'));
-    const cliente = join(base, 'Elisângela Cristina Mariano');
+    const cliente = join(base, basename(ORIGEM));
     cpSync(ORIGEM, cliente, { recursive: true });
     for (const rel of ASSINADOS) rmSync(join(cliente, rel));
     const pastaJob = join(base, 'job');
@@ -40,7 +40,7 @@ describe.skipIf(!REAL || !existsSync(ORIGEM))('ZapSign real', () => {
 
     // segunda pasta logo em seguida: o índice já está pronto, a busca é local
     const inicio2 = Date.now();
-    await z.buscarPorNome('Elisângela Cristina Mariano');
+    await z.buscarPorNome(basename(ORIGEM));
     console.log(`segunda busca em ${Date.now() - inicio2} ms`);
     expect(Date.now() - inicio2).toBeLessThan(1000);
 

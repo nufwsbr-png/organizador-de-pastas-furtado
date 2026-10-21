@@ -5,14 +5,14 @@ import PDFDocument from 'pdfkit';
 import { createWriteStream } from 'node:fs';
 import { Fila } from '../src/main/fila';
 import { inventariar } from '../src/main/etapas/inventario';
-import { etapaPerguntas, validarPerguntas, type Pergunta } from '../src/main/etapas/perguntas';
-import { etapaRespostas, type OutraPergunta, type Resposta } from '../src/main/etapas/respostas';
+import { etapaPerguntas, limparRespostaNoPdf, numerarEmSequencia, validarPerguntas, type Pergunta } from '../src/main/etapas/perguntas';
+import { completarRespostas, etapaRespostas, formatarPerguntas, type OutraPergunta, type Resposta } from '../src/main/etapas/respostas';
 import { etapaPdfEntrevista, gerarPdfEntrevista } from '../src/main/etapas/pdf-entrevista';
 import { extrairTexto, contarPaginas } from '../src/main/ferramentas/pdf';
 import type { Contexto } from '../src/main/job';
 import type { Pedido, Provedor } from '../src/main/provedores/tipos';
 
-const PASTA_REAL = 'C:\\Users\\Computador08\\Downloads\\Elisângela Cristina Mariano';
+const PASTA_REAL = process.env.PASTA_ORIGEM ?? '';
 
 const perguntasExemplo: Pergunta[] = [
   { numero: 1, secao: 'Local de trabalho', pergunta: 'Qual era o endereço do lugar onde você trabalhava?', simNao: false },
@@ -89,6 +89,87 @@ describe('etapaPerguntas', () => {
     expect(validarPerguntas(perguntasExemplo)).toBeNull();
     expect(validarPerguntas([])).toMatch(/nenhuma/i);
     expect(validarPerguntas([perguntasExemplo[0], perguntasExemplo[2]])).toMatch(/numeração/i);
+  });
+});
+
+describe('formato "Entrevista guiada"', () => {
+  async function pdfComTexto(destino: string, linhas: string[]): Promise<void> {
+    await new Promise<void>((resolve, reject) => {
+      const doc = new PDFDocument();
+      const s = doc.pipe(createWriteStream(destino));
+      for (const l of linhas) doc.text(l);
+      doc.end();
+      s.on('finish', () => resolve());
+      s.on('error', reject);
+    });
+  }
+
+  it('acha o PDF da entrevista com nome aleatório pelo texto e manda o texto junto para a IA', async () => {
+    const { cliente, ctx, pastaJob } = await preparar({ perguntasPdf: false });
+    await pdfComTexto(join(cliente, '1700000000000-0a1b2c3d.pdf'), [
+      'Furtado Assessoria e Marketing',
+      'ENTREVISTA GUIADA',
+      'NOME DO CLIENTE: Maria Souza',
+      'TELEFONE: (19) 9 8860-9226',
+      'DADOS PESSOAIS DO RECLAMANTE',
+      '1. Nome Completo',
+      'R: Maria Souza',
+      'ESCALA E HORÁRIO',
+      '1. Qual era sua escala? (6x1, 5x2, 12x36, etc.)',
+      'R: .',
+      '2. Qual era seu horário?',
+      'R: .',
+    ]);
+    await pdfSimples(join(cliente, 'outro documento.pdf'));
+    inventariar(cliente, join(pastaJob, 'inventario.json'));
+    const pedidos: Pedido[] = [];
+    // a IA devolve a numeração do documento (recomeça em cada seção)
+    const vindas = [
+      { numero: 1, secao: 'DADOS PESSOAIS DO RECLAMANTE', pergunta: 'Nome Completo', simNao: false, respostaNoPdf: 'Maria Souza' },
+      { numero: 1, secao: 'ESCALA E HORÁRIO', pergunta: 'Qual era sua escala? (6x1, 5x2, 12x36, etc.)', simNao: false, respostaNoPdf: '.' },
+      { numero: 2, secao: 'ESCALA E HORÁRIO', pergunta: 'Qual era seu horário?', simNao: false, respostaNoPdf: '' },
+    ];
+    const etapa = etapaPerguntas(() => provedorFalso({ perguntas: vindas, dadosCliente: { nome: 'Maria Souza', telefone: '(19) 9 8860-9226' } }, pedidos));
+    const r = await etapa.executar(ctx);
+    expect(r.status).toBe('ok');
+    expect(pedidos[0].prompt).toContain('ENTREVISTA GUIADA');
+    const gravado = JSON.parse(readFileSync(join(pastaJob, 'perguntas.json'), 'utf8')) as Pergunta[];
+    expect(gravado.map((p) => p.numero)).toEqual([1, 2, 3]);
+    expect(gravado.map((p) => p.respostaNoPdf)).toEqual(['Maria Souza', undefined, undefined]);
+    expect(JSON.parse(readFileSync(join(pastaJob, 'dados-cliente.json'), 'utf8')).telefone).toBe('(19) 9 8860-9226');
+  });
+
+  it('numeração por seção vira contínua; falha de verdade continua sendo falha', () => {
+    const p = (numero: number, secao: string): Pergunta => ({ numero, secao, pergunta: 'x', simNao: false });
+    expect(numerarEmSequencia([p(1, 'A'), p(2, 'A'), p(1, 'B'), p(2, 'B')]).map((x) => x.numero)).toEqual([1, 2, 3, 4]);
+    const comFalha = numerarEmSequencia([p(1, 'A'), p(3, 'A')]);
+    expect(validarPerguntas(comFalha)).toMatch(/numeração/i);
+  });
+
+  it('"R: ." é resposta vazia', () => {
+    expect(limparRespostaNoPdf('.')).toBeUndefined();
+    expect(limparRespostaNoPdf(' - ')).toBeUndefined();
+    expect(limparRespostaNoPdf('R$ 2.311,04')).toBe('R$ 2.311,04');
+  });
+
+  it('resposta escrita pela IA vale mesmo marcada como não respondida', () => {
+    const perguntas: Pergunta[] = [{ numero: 1, secao: 'Atividades', pergunta: 'Relata suas atividades.', simNao: false }];
+    const r = completarRespostas(perguntas, [{ numero: 1, simNao: null, resposta: 'Ajudava na manutenção.', naoRespondida: true }]);
+    expect(r[0]).toEqual({ numero: 1, simNao: null, resposta: 'Ajudava na manutenção.', naoRespondida: false });
+  });
+
+  it('resposta que já veio no documento é mantida, e a IA é avisada', () => {
+    const perguntas: Pergunta[] = [
+      { numero: 1, secao: 'Dados', pergunta: 'CPF', simNao: false, respostaNoPdf: '123' },
+      { numero: 2, secao: 'Escala', pergunta: 'Trabalhava aos sábados?', simNao: true },
+    ];
+    expect(formatarPerguntas(perguntas)).toContain('já respondida no documento: "123"');
+    const r = completarRespostas(perguntas, [
+      { numero: 1, simNao: null, resposta: 'outra coisa', naoRespondida: false },
+      { numero: 2, simNao: 'Sim', resposta: 'Sim, até meio-dia.', naoRespondida: false },
+    ]);
+    expect(r[0]).toEqual({ numero: 1, simNao: null, resposta: '123', naoRespondida: false });
+    expect(r[1].resposta).toBe('Sim, até meio-dia.');
   });
 });
 
@@ -195,7 +276,7 @@ describe('PDF da entrevista', () => {
 });
 
 describe('PDF real de perguntas', () => {
-  it('tem 10 páginas rasterizáveis (dado de referência da Elisângela)', async () => {
+  it('tem 10 páginas rasterizáveis (dado de referência da pasta PASTA_ORIGEM)', async () => {
     const pdf = join(PASTA_REAL, 'Perguntas entrevista .pdf');
     if (!existsSync(pdf)) return;
     expect(await contarPaginas(pdf)).toBe(10);

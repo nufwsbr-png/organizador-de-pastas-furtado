@@ -1,11 +1,12 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { basename, extname, join } from 'node:path';
 import type { Etapa } from '../job';
-import { DOCUMENTOS_PADRAO, ehImagem, ehPdf, nomeFinal } from '../padrao';
+import { DOCUMENTOS_PADRAO, ehImagem, ehPdf, nomeFinal, ordenarPorMomento } from '../padrao';
 import { PROMPT_CLASSIFICAR } from '../prompts';
 import { extrairTexto, rasterizar } from '../ferramentas/pdf';
 import type { Provedor } from '../provedores/tipos';
 import type { ArquivoInventariado, Inventario } from './inventario';
+import { PASTA_WHATSAPP } from './whatsapp';
 
 export interface Classificacao {
   id: number;
@@ -44,6 +45,9 @@ export interface ItemParaIA {
   texto: string;
   imagens: string[];
 }
+
+/** Arquivos por chamada da IA (muitas imagens numa chamada só pesam e erram mais). */
+const TAMANHO_LOTE = 20;
 
 const TIPOS_IA = ['Procuração', 'Declaração', 'RG', 'CNH', 'CTPS', 'Contrato Trabalhista', 'Comprovante de residência', 'Perguntas entrevista', 'outro'];
 
@@ -93,24 +97,32 @@ export function planejarMovimentos(
   for (const a of arquivos) if (a.situacao === 'no-lugar') ocupados.add(a.tipo);
 
   const destinosUsados = new Set<string>();
+  // o que veio do WhatsApp e não foi usado vai para Não juntar; o que já estava na pasta vai para Revisar
   const paraRevisar = (relativo: string, tipo: string) => {
     const ext = extname(relativo);
     const base = basename(relativo, ext);
-    let destino = `Revisar/${base}${ext}`;
-    for (let n = 2; destinosUsados.has(destino); n++) destino = `Revisar/${base} (${n})${ext}`;
+    const pasta = relativo.startsWith(`${PASTA_WHATSAPP}/`) ? 'Não juntar' : 'Revisar';
+    let destino = `${pasta}/${base}${ext}`;
+    for (let n = 2; destinosUsados.has(destino); n++) destino = `${pasta}/${base} (${n})${ext}`;
     destinosUsados.add(destino);
     plano.movimentos.push({ origem: relativo, destino, tipo });
   };
 
-  // 1. Arquivos com nome padrão fora do lugar.
-  let audios = 0;
+  // 1. Arquivos com nome padrão fora do lugar. Áudios e transcrições são todos guardados, numerados em ordem de horário
+  // (a ligação que caiu e continuou em outra chamada: Transcrição.txt, Transcrição 2.txt).
+  const numerados = ['Áudio da ligação', 'Transcrição'];
+  const posicao = new Map<string, number>();
+  for (const tipo of numerados) {
+    const doTipo = arquivos.filter((a) => a.situacao === 'mover' && a.tipo === tipo).map((a) => a.relativo);
+    ordenarPorMomento(doTipo).forEach((r, i) => posicao.set(r, i + 1));
+  }
   for (const a of arquivos) {
     if (a.situacao !== 'mover') continue;
     const ext = extname(a.relativo);
-    if (a.tipo === 'Áudio da ligação') {
-      audios++;
+    if (numerados.includes(a.tipo)) {
+      const n = posicao.get(a.relativo)! + (ocupados.has(a.tipo) ? 1 : 0);
       const base = nomeFinal(a.tipo, ext);
-      const destino = audios === 1 && !ocupados.has(a.tipo) ? base : base.replace(ext.toLowerCase(), ` ${audios + (ocupados.has(a.tipo) ? 1 : 0)}${ext.toLowerCase()}`);
+      const destino = n === 1 ? base : base.replace(ext.toLowerCase(), ` ${n}${ext.toLowerCase()}`);
       plano.movimentos.push({ origem: a.relativo, destino, tipo: a.tipo });
       continue;
     }
@@ -179,7 +191,6 @@ export function etapaClassificar(provedor: () => Provedor): Etapa {
       const pendentes = inventario.arquivos.filter((a) => a.situacao === 'classificar');
       const idParaRelativo: Record<number, string> = {};
       const itens: ItemParaIA[] = [];
-      const imagens: string[] = [];
 
       for (let id = 0; id < pendentes.length; id++) {
         const a = pendentes[id];
@@ -198,23 +209,28 @@ export function etapaClassificar(provedor: () => Provedor): Etapa {
         } catch (erro) {
           ctx.log(`Não consegui ler ${a.relativo} (${erro instanceof Error ? erro.message : String(erro)}); vai para Revisar.`, 'aviso');
         }
-        imagens.push(...item.imagens);
         itens.push(item);
       }
 
       let classificacoes: Classificacao[] = [];
       if (itens.length > 0) {
-        ctx.log(`Classificando ${itens.length} arquivo(s) com a IA…`);
-        const resultado = (await provedor().rodar({
-          prompt: PROMPT_CLASSIFICAR(montarItens(itens)),
-          schema: SCHEMA_CLASSIFICAR,
-          imagens,
-          cwd: ctx.job.pasta,
-          dirsExtras: [ctx.pastaJob],
-          nomeTarefa: 'classificar',
-        })) as { arquivos: Classificacao[] };
-        classificacoes = resultado.arquivos ?? [];
-        // o que a IA não devolveu vai para Revisar
+        // conversas com muitas fotos: lotes em ordem (as fotos do WhatsApp estão em ordem de envio, frente e verso juntos)
+        const lotes = Array.from({ length: Math.ceil(itens.length / TAMANHO_LOTE) }, (_, n) => itens.slice(n * TAMANHO_LOTE, (n + 1) * TAMANHO_LOTE));
+        ctx.log(`Classificando ${itens.length} arquivo(s) com a IA${lotes.length > 1 ? ` em ${lotes.length} lotes` : ''}…`);
+        for (const [n, lote] of lotes.entries()) {
+          const resultado = (await provedor().rodar({
+            prompt: PROMPT_CLASSIFICAR(montarItens(lote)),
+            schema: SCHEMA_CLASSIFICAR,
+            imagens: lote.flatMap((i) => i.imagens),
+            cwd: ctx.job.pasta,
+            dirsExtras: [ctx.pastaJob],
+            nomeTarefa: lotes.length > 1 ? `classificar (lote ${n + 1})` : 'classificar',
+          })) as { arquivos: Classificacao[] };
+          const ids = new Set(lote.map((i) => i.id));
+          // grupos são por lote: o mesmo nome de grupo em lotes diferentes não junta arquivos
+          classificacoes.push(...(resultado.arquivos ?? []).filter((c) => ids.has(c.id)).map((c) => ({ ...c, grupo: c.grupo ? `${n}:${c.grupo}` : null })));
+        }
+        // o que a IA não devolveu fica sem uso
         for (const i of itens) if (!classificacoes.some((c) => c.id === i.id)) classificacoes.push({ id: i.id, tipo: 'outro', grupo: null, ordem: 1 });
       }
 

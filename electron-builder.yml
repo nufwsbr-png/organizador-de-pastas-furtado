@@ -1,5 +1,5 @@
 appId: br.com.furtado.organizador
-productName: Organizador de Pastas Furtado
+productName: Organizador de pastas
 directories:
   output: release
 files:
@@ -13,7 +13,7 @@ win:
   target:
     - target: nsis
       arch: [x64]
-  artifactName: Organizador-de-Pastas-Furtado-Setup-${version}.${ext}
+  artifactName: Organizador-de-Pastas-Setup-${version}.${ext}
 nsis:
   oneClick: false
   perMachine: false

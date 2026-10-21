@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Mapa do fluxo · Organizador de pastas</title>
+<!-- Fonte do PDF "Mapa do fluxo.pdf". Para gerar de novo: node docs/mapa-do-fluxo/gerar.mjs -->
+<style>
+  @font-face { font-family: 'Outfit'; font-weight: 100 900; src: url('../../src/renderer/src/fonts/Outfit-variavel.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 100 1000; src: url('../../src/renderer/src/fonts/DMSans-variavel.woff2') format('woff2'); }
+  :root {
+    --fundo: #0e0d12;
+    --linha: #26242e;
+    --branco: #ffffff;
+    --texto: #e4e2ea;
+    --apoio: #8d8996;
+    --apagado: #5c5866;
+    --roxo: #9a5cff; /* só nos números das etapas e na palavra do título */
+  }
+  @page { size: 297mm 210mm; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--fundo); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: 'DM Sans', system-ui, sans-serif; color: var(--texto); font-size: 8.4pt; line-height: 1.5; }
+  b { font-weight: 600; color: var(--branco); }
+
+  .pagina { width: 297mm; height: 210mm; padding: 15mm 20mm 11mm; display: flex; flex-direction: column; overflow: hidden; break-after: page; }
+  .pagina:last-child { break-after: auto; }
+
+  /* cabeçalho e rodapé */
+  .topo { display: flex; justify-content: space-between; align-items: flex-end; gap: 12mm; padding-bottom: 7mm; border-bottom: .25mm solid var(--linha); margin-bottom: 10mm; }
+  .rotulo { font-size: 6.4pt; letter-spacing: .24em; text-transform: uppercase; color: var(--apoio); }
+  h1 { font-family: 'Outfit'; font-weight: 300; font-size: 22pt; line-height: 1.1; color: var(--branco); margin-top: 2.6mm; letter-spacing: -.01em; }
+  .palavra { height: 1.06em; width: 3.2em; vertical-align: -0.24em; overflow: visible; }
+  .palavra text { font-family: 'Outfit'; font-weight: 300; font-size: 100px; }
+  .sub { color: var(--apoio); margin-top: 2.4mm; max-width: 200mm; }
+  .marca { display: flex; align-items: center; gap: 2mm; flex: none; }
+  .marca svg { width: 6.5mm; height: 6.5mm; }
+  .marca .nome { font-family: 'Outfit'; font-weight: 600; font-size: 9.5pt; color: var(--branco); line-height: 1; }
+  .marca .desc { font-size: 5.2pt; letter-spacing: .32em; color: var(--apoio); margin-top: .7mm; }
+  .rodape { margin-top: auto; padding-top: 6mm; display: flex; justify-content: space-between; color: var(--apagado); font-size: 6.4pt; }
+
+  /* página 1: visão geral */
+  .fluxo { display: grid; grid-template-columns: 1fr 9mm 1fr 9mm 1fr 9mm 1fr; }
+  .fase .rotulo { display: block; margin-bottom: 1.8mm; }
+  .fase h2 { font-family: 'Outfit'; font-weight: 400; font-size: 15pt; color: var(--branco); line-height: 1.1; }
+  .fase .desc { color: var(--apoio); margin: 2.2mm 0 5mm; min-height: 19mm; }
+  .fase ol { list-style: none; display: grid; gap: 3.2mm; }
+  .fase li { display: flex; gap: 3mm; align-items: baseline; }
+  .n { font-family: 'Outfit'; font-weight: 500; color: var(--roxo); font-size: 8.6pt; flex: none; width: 5mm; }
+  .seta { display: flex; justify-content: center; padding-top: 7mm; }
+  .seta svg { width: 3mm; height: 6mm; }
+  .notas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12mm; margin-top: auto; padding-top: 8mm; border-top: .25mm solid var(--linha); }
+  .notas h3, .bloco h3 { font-family: 'Outfit'; font-weight: 500; font-size: 10.5pt; color: var(--branco); margin-bottom: 1.6mm; }
+  .notas p { color: var(--apoio); }
+
+  /* página 2: etapa por etapa */
+  .p2 { padding-top: 13mm; }
+  .p2 .topo { padding-bottom: 6mm; margin-bottom: 7mm; }
+  .grade { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; gap: 4.5mm 6mm; }
+  .card { border: .25mm solid var(--linha); border-radius: 2.4mm; padding: 3.4mm 4.2mm; display: flex; flex-direction: column; }
+  .card .cab { display: flex; justify-content: space-between; align-items: baseline; }
+  .fonte { font-size: 5.8pt; letter-spacing: .18em; text-transform: uppercase; color: var(--apoio); }
+  .card h3 { font-family: 'Outfit'; font-weight: 500; font-size: 10.5pt; color: var(--branco); margin: 1.2mm 0 1.2mm; line-height: 1.2; }
+  .card p { font-size: 7.9pt; line-height: 1.42; }
+  .card .notas-card { margin-top: auto; padding-top: 1.8mm; display: grid; gap: .5mm; }
+  .card .nota { color: var(--apoio); font-size: 7.4pt; }
+  .card .nota span { color: var(--texto); font-weight: 600; }
+
+  /* página 3: a pasta no fim */
+  .pastas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9mm 12mm; }
+  .pasta .nome { display: flex; align-items: center; gap: 2.2mm; font-family: 'Outfit'; font-weight: 500; font-size: 12pt; color: var(--branco); margin-bottom: 2.2mm; }
+  .pasta .nome svg { width: 4.6mm; height: 4.6mm; }
+  .pasta ul { list-style: none; display: grid; gap: 1.1mm; }
+  .pasta li { padding-left: 3.4mm; position: relative; }
+  .pasta li::before { content: ''; position: absolute; left: 0; top: 2.1mm; width: 1.6mm; height: .25mm; background: var(--apagado); }
+  .pasta .obs { color: var(--apoio); margin-top: 1.8mm; }
+  .faixa { margin-top: auto; padding-top: 8mm; border-top: .25mm solid var(--linha); }
+  .faixa > .rotulo { display: block; margin-bottom: 4mm; }
+  .colunas-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10mm; }
+  .colunas-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8mm; }
+  .item b { display: block; font-family: 'Outfit'; font-weight: 500; font-size: 9.6pt; margin-bottom: 1mm; }
+  .item p { color: var(--apoio); }
+
+  /* página 4: quando o app para */
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-weight: 400; font-size: 6.4pt; letter-spacing: .22em; text-transform: uppercase; color: var(--apoio); padding: 0 6mm 3mm 0; border-bottom: .25mm solid var(--linha); }
+  td { vertical-align: top; padding: 3.2mm 6mm 3.2mm 0; border-bottom: .25mm solid var(--linha); }
+  tr:last-child td { border-bottom: 0; }
+  td:first-child { width: 52mm; font-family: 'Outfit'; font-weight: 500; font-size: 9.6pt; color: var(--branco); }
+  td:nth-child(2) { color: var(--apoio); width: 46%; }
+
+  /* páginas 5 a 7: trajeto técnico */
+  code, .mono { font-family: Consolas, 'Cascadia Mono', monospace; font-size: 7.3pt; color: var(--texto); }
+  code { background: #1a1920; border-radius: .8mm; padding: .1mm 1mm; white-space: nowrap; }
+  .arq { flex: 1; min-height: 0; display: grid; grid-template-columns: 84mm 1fr; gap: 0; align-items: center; }
+  .pc { border: .25mm solid var(--linha); border-radius: 2.6mm; padding: 5mm 5.4mm; position: relative; }
+  .pc::after { content: ''; position: absolute; right: -9mm; top: 50%; width: 9mm; height: .25mm; background: #3a3744; }
+  .pc h3 { font-family: 'Outfit'; font-weight: 500; font-size: 13pt; color: var(--branco); margin: 1.6mm 0 .6mm; }
+  .pc > .mono { color: var(--apoio); }
+  .pc ul { list-style: none; display: grid; gap: 3.2mm; margin-top: 4.5mm; }
+  .pc li b { display: block; font-family: 'Outfit'; font-weight: 500; font-size: 9.4pt; }
+  .pc li span { display: block; color: var(--apoio); }
+  .pc li .mono { color: var(--texto); margin: .4mm 0; }
+  .servicos { margin-left: 9mm; border-left: .25mm solid #3a3744; padding-left: 8mm; display: grid; gap: 4.2mm; }
+  .servico { position: relative; }
+  .servico::before { content: ''; position: absolute; left: -8mm; top: 2.6mm; width: 5mm; height: .25mm; background: #3a3744; }
+  .servico::after { content: ''; position: absolute; left: -3.2mm; top: 1.95mm; width: 1.5mm; height: 1.5mm; border-radius: 50%; background: var(--roxo); }
+  .servico .tit { display: flex; align-items: baseline; gap: 3mm; }
+  .servico .tit b { font-family: 'Outfit'; font-weight: 500; font-size: 10pt; }
+  .servico .tit span { color: var(--apoio); font-size: 7.6pt; }
+  .servico p { color: var(--apoio); margin-top: .8mm; }
+  .cadeia { display: flex; align-items: center; flex-wrap: wrap; gap: 1.6mm; margin-top: 1.6mm; }
+  .cadeia span { border: .25mm solid var(--linha); border-radius: 1.4mm; padding: .6mm 2mm; font-size: 7.4pt; color: var(--texto); }
+  .cadeia i { font-style: normal; color: var(--apagado); }
+  .tec td:first-child { width: 9mm; font-family: 'Outfit'; font-weight: 500; font-size: 9pt; color: var(--roxo); }
+  .tec td:nth-child(2) { width: 42mm; color: var(--branco); font-family: 'Outfit'; font-weight: 500; font-size: 9.4pt; }
+  .tec td:nth-child(3) { width: auto; color: var(--texto); }
+  .tec td:nth-child(4) { width: 58mm; color: var(--apoio); }
+  .tec td { padding-top: 3.4mm; padding-bottom: 3.4mm; }
+  .tec td p + p { margin-top: 1mm; }
+</style>
+</head>
+<body>
+
+<!-- ======================= PÁGINA 1 · visão geral ======================= -->
+<section class="pagina">
+  <div class="topo">
+    <div>
+      <span class="rotulo">Organizador de pastas · mapa do fluxo</span>
+      <h1>O caminho de uma <svg class="palavra" viewBox="0 0 300 100" preserveAspectRatio="xMinYMid meet"><defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8F4BFF"/><stop offset="1" stop-color="#C89BFF"/></linearGradient></defs><text x="0" y="78" fill="url(#tg)">pasta</text></svg></h1>
+      <p class="sub">Tudo o que o app faz depois do clique em <b>Organizar pasta</b>, em quatro fases, com o mesmo nome de etapa que aparece na tela. O trajeto técnico está nas páginas 5 a 7.</p>
+    </div>
+    <div class="marca">
+      <svg viewBox="0 0 200 200"><polyline points="34,60 74,100 34,140" fill="none" stroke="#FFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" opacity=".2"/><polyline points="66,56 110,100 66,144" fill="none" stroke="#FFF" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/><polyline points="104,50 154,100 104,150" fill="none" stroke="#9A5CFF" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><div class="nome">Nufws</div><div class="desc">AUTOMAÇÕES</div></div>
+    </div>
+  </div>
+
+  <div class="fluxo">
+    <div class="fase">
+      <span class="rotulo">Fase 1</span>
+      <h2>Reunir</h2>
+      <p class="desc">Descobre quem é o cliente e junta o que falta: assinados do ZapSign e documentos do WhatsApp.</p>
+      <ol>
+        <li><span class="n">01</span>Lendo a pasta</li>
+        <li><span class="n">02</span>Lendo a entrevista</li>
+        <li><span class="n">03</span>Buscando no ZapSign</li>
+        <li><span class="n">04</span>Confirmando o cliente</li>
+        <li><span class="n">05</span>Buscando no WhatsApp</li>
+      </ol>
+    </div>
+    <div class="seta"><svg viewBox="0 0 10 20"><polyline points="2,2 8,10 2,18" fill="none" stroke="#5C5866" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="fase">
+      <span class="rotulo">Fase 2</span>
+      <h2>Entrevista</h2>
+      <p class="desc">Transforma a ligação na entrevista preenchida, em PDF.</p>
+      <ol>
+        <li><span class="n">06</span>Transcrevendo a ligação</li>
+        <li><span class="n">07</span>Respondendo a entrevista</li>
+        <li><span class="n">08</span>Gerando o PDF da entrevista</li>
+      </ol>
+    </div>
+    <div class="seta"><svg viewBox="0 0 10 20"><polyline points="2,2 8,10 2,18" fill="none" stroke="#5C5866" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="fase">
+      <span class="rotulo">Fase 3</span>
+      <h2>Organizar</h2>
+      <p class="desc">Identifica cada documento e arruma tudo no padrão do escritório.</p>
+      <ol>
+        <li><span class="n">09</span>Identificando os documentos</li>
+        <li><span class="n">10</span>Arrumando as pastas</li>
+        <li><span class="n">11</span>Salvando a entrevista</li>
+      </ol>
+    </div>
+    <div class="seta"><svg viewBox="0 0 10 20"><polyline points="2,2 8,10 2,18" fill="none" stroke="#5C5866" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="fase">
+      <span class="rotulo">Fase 4</span>
+      <h2>Fechar</h2>
+      <p class="desc">Com a pasta completa, marca "Pasta pronta" na planilha.</p>
+      <ol>
+        <li><span class="n">12</span>Marcando na planilha</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="notas">
+    <div>
+      <h3>O que chega</h3>
+      <p>A entrevista não preenchida e o áudio da ligação (ou a transcrição pronta). O que já estiver na pasta fica; o app só busca o resto.</p>
+    </div>
+    <div>
+      <h3>Várias pastas</h3>
+      <p>Até 3 rodam ao mesmo tempo e as outras esperam a vez. Se o app fechar, cada uma continua de onde parou.</p>
+    </div>
+    <div>
+      <h3>No fim</h3>
+      <p><b>Concluída</b>, ou <b>Precisa de você</b>: o app mostra o motivo e o que fazer. Depois é só clicar em Organizar de novo; o que já foi feito não se repete.</p>
+    </div>
+  </div>
+
+  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 21/10/2026</span><span>1 / 7</span></div>
+</section>
+
+<!-- ======================= PÁGINA 2 · etapa por etapa ======================= -->
+<section class="pagina p2">
+  <div class="topo">
+    <div>
+      <span class="rotulo">Etapa por etapa</span>
+      <h1>O que cada etapa faz</h1>
+      <p class="sub">No canto, de onde vem a informação (IA = Claude ou ChatGPT). <b>Pula</b>: a etapa não é necessária. <b>Para</b>: a etapa espera por você.</p>
+    </div>
+  </div>
+
+  <div class="grade">
+    <div class="card">
+      <div class="cab"><span class="n">01</span><span class="fonte">Pasta</span></div>
+      <h3>Lendo a pasta</h3>
+      <p>Lista o que já está na pasta: entrevista, áudio, transcrição e documentos.</p>
+    </div>
+    <div class="card">
+      <div class="cab"><span class="n">02</span><span class="fonte">IA</span></div>
+      <h3>Lendo a entrevista</h3>
+      <p>Acha o PDF da entrevista (pelo nome ou pelo conteúdo) e lê as perguntas e os dados do cliente, com o telefone.</p>
+      <div class="notas-card"><p class="nota"><span>Para</span> se não achar o PDF das perguntas.</p></div>
+    </div>
+    <div class="card">
+      <div class="cab"><span class="n">03</span><span class="fonte">ZapSign</span></div>
+      <h3>Buscando no ZapSign</h3>
+      <p>Acha o envelope assinado pelo nome e baixa Procuração, Declaração e Contrato Trabalhista.</p>
+      <div class="notas-card"><p class="nota"><span>Pula</span> se os três já estão na pasta.</p><p class="nota"><span>Para</span> se não achar o envelope.</p></div>
+    </div>
+    <div class="card">
+      <div class="cab"><span class="n">04</span><span class="fonte">Planilha</span></div>
+      <h3>Confirmando o cliente</h3>
+      <p>Acha o cliente na planilha pelo nome e confirma o telefone com o do ZapSign ou o da entrevista.</p>
+      <div class="notas-card"><p class="nota"><span>Para</span> se não der para confirmar.</p></div>
+    </div>
+    <div class="card">
+      <div class="cab"><span class="n">05</span><span class="fonte">WhatsApp</span></div>
+      <h3>Buscando no WhatsApp</h3>
+      <p>Baixa as fotos e documentos que o cliente mandou (sem figurinha, áudio e vídeo).</p>
+      <div class="notas-card"><p class="nota"><span>Pula</span> se já tem RG ou CNH, CTPS e comprovante.</p><p class="nota"><span>Para</span> se não achar a conversa.</p></div>
+    </div>
+    <div class="card">
+      <div class="cab"><span class="n">06</span><span class="fonte">ElevenLabs</span></div>
+      <h3>Transcrevendo a ligação</h3>
+      <p>Usa as transcrições que vieram na pasta (todas, em ordem de horário) ou transcreve o áudio.</p>
+      <div class="notas-card"><p class="nota"><span>Para</span> sem transcrição e sem a chave. O resto da pasta segue.</p></div>
+    </div>
+    <div class="card">
+      <div class="cab"><span class="n">07</span><span class="fonte">IA</span></div>
+      <h3>Respondendo a entrevista</h3>
+      <p>Responde cada pergunta com o que foi dito na ligação. O que foi perguntado fora do roteiro entra em "Outras perguntas feitas".</p>
+    </div>
+    <div class="card">
+      <div class="cab"><span class="n">08</span><span class="fonte">App</span></div>
+      <h3>Gerando o PDF da entrevista</h3>
+      <p>Monta a Entrevista preenchida em PDF, com a transcrição anexada no fim.</p>
+    </div>
+    <div class="card">
+      <div class="cab"><span class="n">09</span><span class="fonte">IA</span></div>
+      <h3>Identificando os documentos</h3>
+      <p>Diz o que é cada arquivo: RG, CNH, CTPS, comprovante, contrato… Frente e verso viram um documento só.</p>
+    </div>
+    <div class="card">
+      <div class="cab"><span class="n">10</span><span class="fonte">App</span></div>
+      <h3>Arrumando as pastas</h3>
+      <p>Junta as fotos de cada documento num PDF e põe tudo no padrão. O que veio do WhatsApp e não serviu vai para Não juntar.</p>
+    </div>
+    <div class="card">
+      <div class="cab"><span class="n">11</span><span class="fonte">App</span></div>
+      <h3>Salvando a entrevista</h3>
+      <p>Coloca a Entrevista preenchida.pdf na pasta Entrevista.</p>
+    </div>
+    <div class="card">
+      <div class="cab"><span class="n">12</span><span class="fonte">Planilha</span></div>
+      <h3>Marcando na planilha</h3>
+      <p>Com a pasta completa, marca Pasta pronta = Sim, pinta de verde e anota em Observações.</p>
+      <div class="notas-card"><p class="nota"><span>Para</span> se faltar algum documento.</p><p class="nota">"Não" na planilha não é trocado.</p></div>
+    </div>
+  </div>
+
+  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 21/10/2026</span><span>2 / 7</span></div>
+</section>
+
+<!-- ======================= PÁGINA 3 · a pasta no fim ======================= -->
+<section class="pagina">
+  <div class="topo">
+    <div>
+      <span class="rotulo">A pasta no fim</span>
+      <h1>Onde cada coisa termina</h1>
+      <p class="sub">O padrão do escritório. "Pasta pronta" só é marcada com Procuração, Declaração, RG ou CNH, CTPS, Contrato Trabalhista e Entrevista preenchida.</p>
+    </div>
+  </div>
+
+  <div class="pastas">
+    <div class="pasta">
+      <div class="nome"><svg viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4l2 2h9A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z" fill="none" stroke="#8D8996" stroke-width="1.5"/></svg>Contratos</div>
+      <ul><li>Procuração.pdf</li><li>Declaração.pdf</li></ul>
+      <p class="obs">Vêm do ZapSign.</p>
+    </div>
+    <div class="pasta">
+      <div class="nome"><svg viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4l2 2h9A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z" fill="none" stroke="#8D8996" stroke-width="1.5"/></svg>Documentos</div>
+      <ul><li>RG.pdf ou CNH.pdf</li><li>CTPS.pdf</li></ul>
+      <p class="obs">Fotos e PDFs do WhatsApp; frente e verso no mesmo PDF.</p>
+    </div>
+    <div class="pasta">
+      <div class="nome"><svg viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4l2 2h9A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z" fill="none" stroke="#8D8996" stroke-width="1.5"/></svg>Entrevista</div>
+      <ul><li>Perguntas entrevista.pdf</li><li>Áudio da ligação</li><li>Transcrição (uma por ligação)</li><li>Entrevista preenchida.pdf</li></ul>
+    </div>
+    <div class="pasta">
+      <div class="nome"><svg viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4l2 2h9A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z" fill="none" stroke="#8D8996" stroke-width="1.5"/></svg>Não juntar</div>
+      <ul><li>Contrato Trabalhista.pdf</li><li>Comprovante de residência.pdf</li><li>Tudo do WhatsApp que não foi usado</li></ul>
+      <p class="obs">Holerites, prints, fotos do trabalho, documentos repetidos.</p>
+    </div>
+    <div class="pasta">
+      <div class="nome"><svg viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4l2 2h9A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z" fill="none" stroke="#5C5866" stroke-width="1.5" stroke-dasharray="2 2"/></svg>Revisar</div>
+      <p>Arquivos que já estavam na pasta e a IA não reconheceu.</p>
+      <p class="obs">Só aparece se houver algum.</p>
+    </div>
+    <div class="pasta">
+      <div class="nome"><svg viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4l2 2h9A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z" fill="none" stroke="#5C5866" stroke-width="1.5" stroke-dasharray="2 2"/></svg>_substituidos</div>
+      <p>Os originais que viraram PDF ou foram trocados, como as fotos soltas do RG.</p>
+      <p class="obs">O app nunca apaga um arquivo.</p>
+    </div>
+  </div>
+
+  <div class="faixa">
+    <span class="rotulo">Travas de segurança</span>
+    <div class="colunas-4">
+      <div class="item"><b>Só lê o WhatsApp</b><p>Nunca envia mensagem.</p></div>
+      <div class="item"><b>Só a linha do cliente</b><p>Confere nome e telefone antes e depois de gravar na planilha.</p></div>
+      <div class="item"><b>Nada é apagado</b><p>O que sai do lugar vai para _substituidos.</p></div>
+      <div class="item"><b>Chaves fora do código</b><p>Ficam só no PC de cada um.</p></div>
+    </div>
+  </div>
+
+  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 21/10/2026</span><span>3 / 7</span></div>
+</section>
+
+<!-- ======================= PÁGINA 4 · quando o app para ======================= -->
+<section class="pagina">
+  <div class="topo">
+    <div>
+      <span class="rotulo">Precisam de você</span>
+      <h1>Quando o app para, e o que fazer</h1>
+      <p class="sub">A pasta vai para "Precisam de você" com o motivo na tela. Depois de resolver, clique em Organizar de novo (ou Buscar de novo).</p>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>Etapa</th><th>Por que para</th><th>O que fazer</th></tr></thead>
+    <tbody>
+      <tr><td>Lendo a entrevista</td><td>Não achou o PDF com as perguntas.</td><td>Coloque o PDF das perguntas na pasta.</td></tr>
+      <tr><td>Buscando no ZapSign</td><td>Nome diferente no ZapSign, envelope ainda não assinado ou dois clientes parecidos.</td><td>Informe o nome, o e-mail ou o link do documento no ZapSign.</td></tr>
+      <tr><td>Confirmando o cliente</td><td>Não está na planilha, o nome se repete ou o telefone é diferente do usado no ZapSign.</td><td>Preencha a caixa <b>Dados do cliente</b> com nome e telefone.</td></tr>
+      <tr><td>Buscando no WhatsApp</td><td>Não há conversa com esse telefone no WhatsApp do escritório.</td><td>Confira o telefone na planilha ou informe outro em Dados do cliente.</td></tr>
+      <tr><td>Transcrevendo a ligação</td><td>Sem transcrição na pasta e sem a chave do ElevenLabs.</td><td>Coloque o arquivo da transcrição na pasta ou a chave em Ajustes.</td></tr>
+      <tr><td>Marcando na planilha</td><td>Falta algum documento ou alguma etapa ficou pendente; ou a linha está "Não".</td><td>Resolva o que a tela lista. "Não" fica como está: é decisão da equipe.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="faixa">
+    <span class="rotulo">Com quem o app conversa</span>
+    <div class="colunas-5">
+      <div class="item"><b>IA</b><p>Claude ou ChatGPT: lê a entrevista, responde e identifica os documentos.</p></div>
+      <div class="item"><b>ZapSign</b><p>Documentos assinados do cliente.</p></div>
+      <div class="item"><b>WhatsApp</b><p>O do escritório, pelo WAHA na VPS (pastas.nufws.com.br).</p></div>
+      <div class="item"><b>Planilha do Google</b><p>Contratos/Entrevistas/Pastas.</p></div>
+      <div class="item"><b>ElevenLabs</b><p>Transcrição do áudio da ligação.</p></div>
+    </div>
+  </div>
+
+  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 21/10/2026</span><span>4 / 7</span></div>
+</section>
+
+<!-- ======================= PÁGINA 5 · por dentro ======================= -->
+<section class="pagina">
+  <div class="topo">
+    <div>
+      <span class="rotulo">Trajeto técnico</span>
+      <h1>Por dentro do app</h1>
+      <p class="sub">O app roda no PC de cada pessoa e conversa direto com cada serviço pela internet. Não há servidor do app no meio: o único servidor próprio é o do WhatsApp, na VPS.</p>
+    </div>
+  </div>
+
+  <div class="arq">
+    <div class="pc">
+      <span class="rotulo">No PC</span>
+      <h3>Organizador de pastas</h3>
+      <span class="mono">Electron · React · Node.js</span>
+      <ul>
+        <li><b>Pasta do cliente</b><span>A que foi escolhida em Enviar pasta. É organizada no próprio lugar.</span></li>
+        <li><b>Pasta de trabalho</b><span class="mono">%APPDATA%\Organizador de Pastas Furtado\jobs\&lt;id&gt;\</span><span>Um arquivo por etapa: se o app fechar, ele continua dali.</span></li>
+        <li><b>Chaves</b><span class="mono">%APPDATA%\Organizador de Pastas Furtado\.env</span><span>Ficam só no PC, nunca no código.</span></li>
+        <li><b>IA</b><span>Claude Code ou Codex CLI, instalados e logados com a assinatura.</span></li>
+      </ul>
+    </div>
+
+    <div class="servicos">
+      <div class="servico">
+        <div class="tit"><b>WhatsApp do escritório</b><span>WAHA na VPS (Hostinger)</span></div>
+        <div class="cadeia"><span class="mono">pastas.nufws.com.br</span><i>→</i><span>Traefik (HTTPS)</span><i>→</i><span>nginx</span><i>→</i><span>WAHA (GOWS)</span><i>→</i><span>sessão furtado</span></div>
+        <p>Certificado Let's Encrypt renovado pelo Traefik. Chave <code>WAHA_API_KEY</code> no cabeçalho <code>X-Api-Key</code>, só de leitura da sessão do escritório.</p>
+      </div>
+      <div class="servico">
+        <div class="tit"><b>ZapSign</b><span class="mono">https://api.zapsign.com.br/api/v1</span></div>
+        <p><code>Authorization: Bearer</code> com o <code>ZAPSIGN_API_TOKEN</code>.</p>
+      </div>
+      <div class="servico">
+        <div class="tit"><b>Planilha do Google</b><span class="mono">https://sheets.googleapis.com (API v4)</span></div>
+        <p>Conta de serviço do Google em <code>GOOGLE_SERVICE_ACCOUNT_JSON_BASE64</code>, editora da planilha.</p>
+      </div>
+      <div class="servico">
+        <div class="tit"><b>ElevenLabs</b><span class="mono">https://api.elevenlabs.io/v1/speech-to-text</span></div>
+        <p>Cabeçalho <code>xi-api-key</code> com a <code>ELEVENLABS_API_KEY</code>; modelo <code>scribe_v2</code>.</p>
+      </div>
+      <div class="servico">
+        <div class="tit"><b>IA</b><span>Anthropic (Claude) ou OpenAI (ChatGPT)</span></div>
+        <p>Pelo programa oficial: <code>claude -p --json-schema</code> ou <code>codex exec --output-schema</code>. Usa a assinatura, sem chave de API; a resposta volta em JSON conferido por esquema.</p>
+      </div>
+      <div class="servico">
+        <div class="tit"><b>GitHub</b><span class="mono">nufwsbr-png/organizador-de-pastas-furtado · Releases</span></div>
+        <p>Atualizações do app (electron-updater): cada versão nova sai de um commit na branch main.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 21/10/2026</span><span>5 / 7</span></div>
+</section>
+
+<!-- ======================= PÁGINA 6 · trajeto 01 a 06 ======================= -->
+<section class="pagina">
+  <div class="topo">
+    <div>
+      <span class="rotulo">Trajeto técnico · etapas 01 a 06</span>
+      <h1>O que cada etapa chama</h1>
+      <p class="sub">"Grava" é o arquivo da etapa na pasta de trabalho (<span class="mono">jobs\&lt;id&gt;\</span>). Quando ele existe, a etapa já foi feita e não roda de novo.</p>
+    </div>
+  </div>
+
+  <table class="tec">
+    <thead><tr><th></th><th>Etapa</th><th>O que o app chama</th><th>Grava</th></tr></thead>
+    <tbody>
+      <tr><td>01</td><td>Lendo a pasta</td>
+        <td>Lê a pasta do cliente no disco e separa áudios, PDFs, imagens e transcrições.</td>
+        <td><code>inventario.json</code></td></tr>
+      <tr><td>02</td><td>Lendo a entrevista</td>
+        <td><p>Acha o PDF pelo nome ou, se o nome for outro, pelo texto da 1ª página ("Entrevista guiada"). Extrai o texto (pdfjs-dist) e transforma as páginas em imagens (@napi-rs/canvas).</p><p>A IA lê as imagens e o texto e devolve as perguntas, as respostas que já vêm no documento e os dados do cliente.</p></td>
+        <td><code>perguntas.json</code> · <code>dados-cliente.json</code></td></tr>
+      <tr><td>03</td><td>Buscando no ZapSign</td>
+        <td><p><code>GET /docs/</code> monta um índice local dos envelopes do último ano (a API não busca por nome) e acha o cliente pelo nome.</p><p><code>GET /docs/{token}/</code> traz o envelope; o app baixa os <code>signed_file</code> de cada documento.</p></td>
+        <td><code>zapsign.json</code> · índice em <code>zapsign-indice.json</code> · PDFs em Contratos e Não juntar</td></tr>
+      <tr><td>04</td><td>Confirmando o cliente</td>
+        <td><p><code>spreadsheets.values.get</code> lê a aba Lançamentos; as colunas são achadas pelo nome do cabeçalho.</p><p>Compara o telefone da linha com o do signatário no ZapSign ou o do documento da entrevista (8 últimos dígitos).</p></td>
+        <td><code>cliente.json</code> (nome, telefone, linha)</td></tr>
+      <tr><td>05</td><td>Buscando no WhatsApp</td>
+        <td><p>Em <code>https://pastas.nufws.com.br</code>: <code>GET /api/contacts/check-exists?phone=55…</code> acha a conversa (com o 9º dígito e o ID novo do WhatsApp, via <code>/api/furtado/lids</code>).</p><p><code>GET /api/furtado/chats/{id}/messages?filter.fromMe=false&amp;downloadMedia=true</code>, 50 por vez, e baixa cada arquivo em <code>/api/files/furtado/…</code> na hora (o WAHA guarda o arquivo por 3 minutos).</p></td>
+        <td><code>whatsapp.json</code> · arquivos em <code>WhatsApp\</code> na pasta do cliente</td></tr>
+      <tr><td>06</td><td>Transcrevendo a ligação</td>
+        <td><p>Usa os <code>.txt</code>, <code>.docx</code> ou <code>.pdf</code> de transcrição da pasta, se houver; vários viram um texto só, em ordem de horário.</p><p>Senão, <code>POST https://api.elevenlabs.io/v1/speech-to-text</code> com o áudio (modelo <code>scribe_v2</code>, português).</p></td>
+        <td><code>transcricao.txt</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 21/10/2026</span><span>6 / 7</span></div>
+</section>
+
+<!-- ======================= PÁGINA 7 · trajeto 07 a 12 ======================= -->
+<section class="pagina">
+  <div class="topo">
+    <div>
+      <span class="rotulo">Trajeto técnico · etapas 07 a 12</span>
+      <h1>O que cada etapa chama</h1>
+      <p class="sub">A IA nunca altera arquivos: ela só lê e responde em JSON. Quem move, junta e grava é o próprio app.</p>
+    </div>
+  </div>
+
+  <table class="tec">
+    <thead><tr><th></th><th>Etapa</th><th>O que o app chama</th><th>Grava</th></tr></thead>
+    <tbody>
+      <tr><td>07</td><td>Respondendo a entrevista</td>
+        <td>A IA recebe as perguntas e a transcrição e devolve as respostas e as "Outras perguntas feitas".</td>
+        <td><code>respostas.json</code></td></tr>
+      <tr><td>08</td><td>Gerando o PDF da entrevista</td>
+        <td>Monta o PDF no próprio PC (pdfkit), com a transcrição anexada no fim.</td>
+        <td><code>Entrevista preenchida.pdf</code></td></tr>
+      <tr><td>09</td><td>Identificando os documentos</td>
+        <td>Manda para a IA o texto (pdfjs-dist) e a imagem das primeiras páginas de cada arquivo, em lotes de até 20, e recebe o tipo de cada um e quais são frente e verso.</td>
+        <td><code>plano-movimentos.json</code></td></tr>
+      <tr><td>10</td><td>Arrumando as pastas</td>
+        <td><p>Junta as fotos de cada documento num PDF (pdf-lib) e move os arquivos para o padrão.</p><p>Originais vão para <code>_substituidos\</code>; a pasta <code>WhatsApp\</code> é removida quando fica vazia.</p></td>
+        <td><code>movimentos.json</code> · Contratos, Documentos, Não juntar</td></tr>
+      <tr><td>11</td><td>Salvando a entrevista</td>
+        <td>Copia a entrevista preenchida para <code>Entrevista\</code> (a anterior, se houver, vai para <code>_substituidos\</code>).</td>
+        <td><code>entrevista-entregue.json</code></td></tr>
+      <tr><td>12</td><td>Marcando na planilha</td>
+        <td><p>Relocaliza a linha por nome e telefone (<code>values.get</code>) e lê as opções da lista de "Pasta pronta" (<code>spreadsheets.get</code>).</p><p>Grava "Sim" (<code>values.update</code>), pinta o marcador (<code>batchUpdate · repeatCell</code>) e acrescenta a anotação em Observações. Relê a linha; se ela mudou de dono no meio, desfaz.</p></td>
+        <td><code>planilha.json</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 21/10/2026</span><span>7 / 7</span></div>
+</section>
+
+</body>
+</html>

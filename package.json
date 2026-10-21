@@ -1,6 +1,6 @@
 {
   "name": "organizador-de-pastas-furtado",
-  "productName": "Organizador de Pastas Furtado",
+  "productName": "Organizador de pastas",
   "version": "0.0.0",
   "private": true,
   "description": "Organiza as pastas de clientes do escritório Furtado: transcreve a entrevista, preenche o questionário e arruma os documentos.",
@@ -16,6 +16,7 @@
     "dist": "electron-vite build && electron-builder --win"
   },
   "dependencies": {
+    "@googleapis/sheets": "^18.1.1",
     "@napi-rs/canvas": "^1.0.11",
     "dotenv": "^18.0.8",
     "electron-updater": "^6.8.9",

@@ -2,7 +2,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { Etapa } from '../job';
 import { nomeFinal, normalizar } from '../padrao';
-import { grauNome, palavrasDoNome, type EnvelopeDetalhe, type EnvelopeIndice, type FonteZapsign } from '../ferramentas/zapsign';
+import { type EnvelopeDetalhe, type EnvelopeIndice, type FonteZapsign } from '../ferramentas/zapsign';
+import { grauNome, palavrasDoNome } from '../ferramentas/nomes';
+import { nomeDoCliente } from './cliente';
 import { inventariar, type Inventario } from './inventario';
 import { guardarEmSubstituidos, type Feito } from './mover';
 
@@ -54,7 +56,7 @@ function gravarNoLugar(pastaCliente: string, relativo: string, conteudo: Buffer,
 
 type Escolha = { envelopes: EnvelopeIndice[] } | { pendente: string };
 
-/** Acha os envelopes do cliente: por token, e-mail ou nome (o da pasta, se o usuário não informou outro). */
+/** Acha os envelopes do cliente: por token, e-mail ou nome (o da entrevista ou da pasta, se o usuário não informou outro). */
 async function acharEnvelopes(fonte: FonteZapsign, busca: Busca): Promise<Escolha> {
   if (busca.tipo === 'token') {
     const d = await fonte.detalhar(busca.valor);
@@ -73,7 +75,7 @@ async function acharEnvelopes(fonte: FonteZapsign, busca: Busca): Promise<Escolh
     return {
       pendente:
         `Não achei no ZapSign um documento assinado por "${busca.valor}" (procurei desde ${data(desde)}). ` +
-        'Se o nome no ZapSign for diferente do nome da pasta, informe abaixo o nome, o e-mail ou o link do documento no ZapSign e clique em Buscar de novo.',
+        'Se o nome no ZapSign for diferente, informe abaixo o nome, o e-mail ou o link do documento no ZapSign e clique em Buscar de novo.',
     };
   }
   const pessoas = [...new Set(escolhidos.map((c) => palavrasDoNome(c.s.nome).join(' ')))];
@@ -103,7 +105,8 @@ export function etapaZapsign(fonte: () => FonteZapsign | null): Etapa {
       const z = fonte();
       if (!z) return { status: 'pendente', motivo: MENSAGEM_SEM_TOKEN };
 
-      const busca = interpretarBusca(ctx.job.buscaZapsign?.trim() || ctx.job.nome);
+      // o nome do documento da entrevista é o do sistema; o da pasta pode ter apelido ou sobra
+      const busca = interpretarBusca(ctx.job.buscaZapsign?.trim() || nomeDoCliente(ctx));
       ctx.log(`Procurando ${busca.tipo === 'nome' ? `"${busca.valor}"` : busca.valor} no ZapSign…`);
 
       const feitos: Feito[] = [];

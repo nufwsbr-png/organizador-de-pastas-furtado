@@ -113,14 +113,14 @@ describe('transcrição pronta na pasta em outros formatos', () => {
   it('acha um .docx com "transcri" no nome em subpasta, lê o texto e não chama a API', async () => {
     const { cliente, ctx, etapa, pastaJob, chamadas } = preparar({ audio: true, chave: 'abc' });
     mkdirSync(join(cliente, 'Ligação'));
-    await docx(join(cliente, 'Ligação', 'Transcricao da entrevista.docx'), 'Atendente: Bom dia.\nCliente: Bom dia, trabalhei na Rivelli.');
+    await docx(join(cliente, 'Ligação', 'Transcricao da entrevista.docx'), 'Atendente: Bom dia.\nCliente: Bom dia, trabalhei na Acme.');
     inventariar(cliente, join(pastaJob, 'inventario.json'));
     const r = await etapa.executar(ctx);
     expect(r.status).toBe('ok');
     expect(chamadas).toEqual([]);
     const texto = readFileSync(join(pastaJob, 'transcricao.txt'), 'utf8');
     expect(texto).toContain('Atendente: Bom dia.');
-    expect(texto).toContain('Cliente: Bom dia, trabalhei na Rivelli.');
+    expect(texto).toContain('Cliente: Bom dia, trabalhei na Acme.');
   });
 
   it('acha um .pdf de transcrição e extrai o texto', async () => {
@@ -147,5 +147,30 @@ describe('transcrição pronta na pasta em outros formatos', () => {
     const r = await etapa.executar(ctx);
     expect(r.status).toBe('ok');
     expect(readFileSync(join(pastaJob, 'transcricao.txt'), 'utf8')).toBe('Cliente: sim, fazia hora extra.');
+  });
+});
+
+describe('ligação que caiu e continuou em outra chamada', () => {
+  it('usa todas as transcrições da pasta, em ordem de horário, sem chamar a API', async () => {
+    const { cliente, ctx, etapa, pastaJob, chamadas, mensagens } = preparar({ audio: false, chave: 'abc' });
+    writeFileSync(join(cliente, 'Transcricao - 19-10-2026 - 16h56 - Gustavo.txt'), 'segunda parte');
+    writeFileSync(join(cliente, 'Transcricao - 19-10-2026 - 16h45 - Gustavo.txt'), 'primeira parte');
+    inventariar(cliente, join(pastaJob, 'inventario.json'));
+    const r = await etapa.executar(ctx);
+    expect(r.status).toBe('ok');
+    expect(chamadas).toEqual([]);
+    const texto = readFileSync(join(pastaJob, 'transcricao.txt'), 'utf8');
+    expect(texto.indexOf('primeira parte')).toBeGreaterThan(-1);
+    expect(texto.indexOf('primeira parte')).toBeLessThan(texto.indexOf('segunda parte'));
+    expect(mensagens.join('\n')).toContain('2 transcrições');
+  });
+
+  it('a mesma ligação em txt e pdf conta uma vez (fica o txt)', async () => {
+    const { cliente, ctx, etapa, pastaJob } = preparar({ audio: false });
+    writeFileSync(join(cliente, 'Transcrição.txt'), 'do txt');
+    writeFileSync(join(cliente, 'Transcrição.md'), 'do md');
+    inventariar(cliente, join(pastaJob, 'inventario.json'));
+    await etapa.executar(ctx);
+    expect(readFileSync(join(pastaJob, 'transcricao.txt'), 'utf8')).toBe('do txt');
   });
 });

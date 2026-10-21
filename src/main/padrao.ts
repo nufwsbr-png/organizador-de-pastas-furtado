@@ -90,6 +90,23 @@ export function ehTranscricao(nome: string): boolean {
   return doc.extensoes.includes(extname(nome).toLowerCase()) && normalizar(basename(nome, extname(nome))).includes('transcri');
 }
 
+/** Data e hora escritas no nome do arquivo ("19-10-2026 - 16h45", "2026-10-19 16.45"), como texto ordenável; null se não houver data. */
+export function momentoNoNome(nome: string): string | null {
+  const dma = /(\d{1,2})[-_./](\d{1,2})[-_./](\d{4})/.exec(nome);
+  const amd = /(\d{4})[-_./](\d{1,2})[-_./](\d{1,2})/.exec(nome);
+  const data = amd ? [amd[1], amd[2], amd[3]] : dma ? [dma[3], dma[2], dma[1]] : null;
+  if (!data) return null;
+  const hora = /(\d{1,2})\s*[h:.]\s*(\d{2})(?!\d)/.exec(nome.slice((amd ?? dma)!.index + (amd ?? dma)![0].length));
+  const dois = (n: string) => n.padStart(2, '0');
+  return `${data[0]}-${dois(data[1])}-${dois(data[2])} ${hora ? `${dois(hora[1])}:${hora[2]}` : '00:00'}`;
+}
+
+/** Ordena arquivos pela data e hora do nome (os sem data vão por último), e depois pelo nome. */
+export function ordenarPorMomento(relativos: string[]): string[] {
+  const chave = (r: string) => momentoNoNome(basename(r)) ?? '9999';
+  return [...relativos].sort((a, b) => chave(a).localeCompare(chave(b)) || a.localeCompare(b, 'pt-BR', { numeric: true }));
+}
+
 export function ehImagem(nome: string): boolean {
   return EXT_IMAGEM.includes(extname(nome).toLowerCase());
 }

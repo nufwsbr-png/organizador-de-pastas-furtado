@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react';
-import simbolo from './assets/simbolo.svg';
-import { api, type EstadoApp } from './api';
+import { api, type Ajustes as AjustesApp, type EstadoApp } from './api';
+import { Simbolo } from './Simbolo';
+
+const NOME_TEMA: Record<AjustesApp['tema'], string> = { sistema: 'Igual ao Windows', claro: 'Claro', escuro: 'Noturno' };
 
 interface Props {
   estado: EstadoApp;
@@ -19,12 +21,10 @@ interface PropsSegredo {
   aoMudar: () => Promise<unknown>;
 }
 
-/** Chave/token guardado no .env do app: colar, testar e apagar. */
-function Segredo({ titulo, children, atual, placeholder, salvar, testar, aoMudar }: PropsSegredo) {
-  const [valor, setValor] = useState('');
+/** Executa uma ação de Ajustes mostrando o resultado (ou o erro) embaixo da seção. */
+function useAcao() {
   const [resultado, setResultado] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
-
   const agir = async (acao: () => Promise<string>) => {
     setOcupado(true);
     try {
@@ -35,6 +35,13 @@ function Segredo({ titulo, children, atual, placeholder, salvar, testar, aoMudar
       setOcupado(false);
     }
   };
+  return { resultado, ocupado, agir };
+}
+
+/** Chave/token guardado no .env do app: colar, testar e apagar. */
+function Segredo({ titulo, children, atual, placeholder, salvar, testar, aoMudar }: PropsSegredo) {
+  const [valor, setValor] = useState('');
+  const { resultado, ocupado, agir } = useAcao();
 
   return (
     <section>
@@ -82,6 +89,102 @@ function Segredo({ titulo, children, atual, placeholder, salvar, testar, aoMudar
   );
 }
 
+/** WAHA: endereço, sessão do WhatsApp do escritório e chave da API. */
+function SecaoWhatsapp({ estado, aoMudar }: Omit<Props, 'aoVoltar'>) {
+  const [url, setUrl] = useState(estado.ajustes.wahaUrl);
+  const [sessao, setSessao] = useState(estado.ajustes.wahaSessao);
+  const [chave, setChave] = useState('');
+  const { resultado, ocupado, agir } = useAcao();
+
+  return (
+    <section>
+      <h2>WhatsApp (WAHA)</h2>
+      <p className="sub">
+        Conversas do WhatsApp do escritório. O app só lê: acha a conversa pelo telefone da planilha e baixa as fotos e os documentos que o cliente mandou.
+        Chave atual: {estado.chaveWaha ?? 'nenhuma'}.
+      </p>
+      <div className="linha">
+        <input placeholder="https://pastas.nufws.com.br" value={url} onChange={(e) => setUrl(e.target.value)} />
+        <input className="campo-curto" placeholder="Sessão" value={sessao} onChange={(e) => setSessao(e.target.value)} />
+      </div>
+      <div className="linha">
+        <input type="password" placeholder={estado.chaveWaha ? 'Nova chave da API (deixe vazio para manter)' : 'Chave da API do WAHA'} value={chave} onChange={(e) => setChave(e.target.value)} />
+        <button
+          className="primario"
+          disabled={ocupado}
+          onClick={() =>
+            agir(async () => {
+              await api.ajustes.definir({ wahaUrl: url.trim().replace(/\/+$/, ''), wahaSessao: sessao.trim() || 'furtado' });
+              if (chave.trim()) await api.ajustes.chaveWaha(chave);
+              setChave('');
+              await aoMudar();
+              return (await api.ajustes.testarWaha()).mensagem;
+            })
+          }
+        >
+          Salvar
+        </button>
+        <button disabled={ocupado || !estado.ajustes.wahaUrl} onClick={() => agir(async () => (await api.ajustes.testarWaha()).mensagem)}>
+          Testar
+        </button>
+      </div>
+      {resultado && <p className="detalhe-texto">{resultado}</p>}
+    </section>
+  );
+}
+
+/** Planilha Contratos/Entrevistas/Pastas: conta de serviço do Google, link e aba. */
+function SecaoPlanilha({ estado, aoMudar }: Omit<Props, 'aoVoltar'>) {
+  const [id, setId] = useState(estado.ajustes.planilhaId);
+  const [aba, setAba] = useState(estado.ajustes.planilhaAba);
+  const { resultado, ocupado, agir } = useAcao();
+
+  return (
+    <section>
+      <h2>Planilha</h2>
+      <p className="sub">
+        Com ela o app confirma nome e telefone do cliente e, com a pasta pronta, marca "Pasta pronta" = Sim, pinta o marcador de verde e anota em Observações.
+      </p>
+      <div className="linha">
+        <button
+          disabled={ocupado}
+          onClick={() =>
+            agir(async () => {
+              const email = await api.ajustes.contaServico();
+              await aoMudar();
+              return email ? `Conta de serviço: ${email}. Compartilhe a planilha com esse e-mail como Editor.` : 'Nenhum arquivo escolhido.';
+            })
+          }
+        >
+          {estado.contaServico ? 'Trocar o arquivo da conta de serviço' : 'Escolher o arquivo da conta de serviço (JSON)'}
+        </button>
+        {estado.contaServico && <span className="sub">{estado.contaServico}</span>}
+      </div>
+      <div className="linha">
+        <input placeholder="Link da planilha no Google Sheets" value={id} onChange={(e) => setId(e.target.value)} />
+        <input className="campo-curto" placeholder="Aba" value={aba} onChange={(e) => setAba(e.target.value)} />
+        <button
+          className="primario"
+          disabled={ocupado}
+          onClick={() =>
+            agir(async () => {
+              await api.ajustes.definir({ planilhaId: id.trim(), planilhaAba: aba.trim() || 'Lançamentos' });
+              await aoMudar();
+              return (await api.ajustes.testarPlanilha()).mensagem;
+            })
+          }
+        >
+          Salvar
+        </button>
+        <button disabled={ocupado || !estado.ajustes.planilhaId} onClick={() => agir(async () => (await api.ajustes.testarPlanilha()).mensagem)}>
+          Testar
+        </button>
+      </div>
+      {resultado && <p className="detalhe-texto">{resultado}</p>}
+    </section>
+  );
+}
+
 export function Ajustes({ estado, aoVoltar, aoMudar }: Props) {
   const a = estado.atualizacao;
 
@@ -89,7 +192,7 @@ export function Ajustes({ estado, aoVoltar, aoMudar }: Props) {
     <div className="tela-ajustes">
       <header className="barra">
         <div className="marca">
-          <img className="simbolo" src={simbolo} alt="" />
+          <Simbolo />
           <h1>Ajustes</h1>
         </div>
         <button onClick={aoVoltar}>← Voltar</button>
@@ -108,6 +211,9 @@ export function Ajustes({ estado, aoVoltar, aoMudar }: Props) {
           Token da API do ZapSign (a conta precisa do Plano de API). Com ele o app puxa a procuração, a declaração e o contrato assinados do cliente e guarda em
           Contratos e Não juntar. Fica em <code>{estado.arquivoEnv}</code>.
         </Segredo>
+
+        <SecaoWhatsapp estado={estado} aoMudar={aoMudar} />
+        <SecaoPlanilha estado={estado} aoMudar={aoMudar} />
 
         <Segredo
           titulo="Transcrição (ElevenLabs)"
@@ -136,6 +242,20 @@ export function Ajustes({ estado, aoVoltar, aoMudar }: Props) {
                 ))}
               </select>
             </label>
+          </div>
+        </section>
+
+        <section>
+          <h2>Aparência</h2>
+          <p className="sub">Modo claro, noturno ou o mesmo do Windows. O sol/lua da barra também alterna.</p>
+          <div className="linha">
+            <div className="segmentos" role="radiogroup" aria-label="Tema">
+              {(Object.keys(NOME_TEMA) as AjustesApp['tema'][]).map((t) => (
+                <button key={t} role="radio" aria-checked={estado.ajustes.tema === t} className={estado.ajustes.tema === t ? 'escolhido' : ''} onClick={() => api.ajustes.definir({ tema: t }).then(aoMudar)}>
+                  {NOME_TEMA[t]}
+                </button>
+              ))}
+            </div>
           </div>
         </section>
 

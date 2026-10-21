@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import simbolo from './assets/simbolo.svg';
 import { api, type IdProvedor, type StatusProvedor } from './api';
+import { Simbolo } from './Simbolo';
+import { BotaoTema } from './Tema';
 
 interface Props {
   aoEntrar: (id: IdProvedor) => Promise<void>;
   provedorAtual: IdProvedor | null;
+  aoMudar: () => Promise<unknown>;
 }
 
 const INFO: Record<IdProvedor, { titulo: string; subtitulo: string; programa: string }> = {
@@ -12,7 +14,7 @@ const INFO: Record<IdProvedor, { titulo: string; subtitulo: string; programa: st
   codex: { titulo: 'Entrar com ChatGPT', subtitulo: 'Assinatura ChatGPT (Plus/Pro) pelo Codex', programa: 'Codex' },
 };
 
-export function Login({ aoEntrar, provedorAtual }: Props) {
+export function Login({ aoEntrar, provedorAtual, aoMudar }: Props) {
   const [status, setStatus] = useState<Record<IdProvedor, StatusProvedor> | null>(null);
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -38,14 +40,17 @@ export function Login({ aoEntrar, provedorAtual }: Props) {
   return (
     <div className="tela-login">
       <div className="tela-login-conteudo">
-        <div className="logo">
-          <img src={simbolo} alt="" />
-          <span className="nome">
-            Nufws<small>Automações</small>
-          </span>
+        <div className="topo-login">
+          <div className="logo">
+            <Simbolo />
+            <span className="nome">
+              Nufws<small>Automações</small>
+            </span>
+          </div>
+          <BotaoTema aoMudar={aoMudar} />
         </div>
         <header>
-          <span className="rotulo eyebrow">Organizador de pastas · Furtado</span>
+          <span className="rotulo eyebrow">Organizador de pastas</span>
           <h1>
             Pastas de clientes
             <br />

@@ -2,7 +2,8 @@ import { createServer, type Server } from 'node:http';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ClienteZapsign, ErroZapsign, grauNome, type EnvelopeDetalhe, type EnvelopeIndice, type FonteZapsign } from '../src/main/ferramentas/zapsign';
+import { ClienteZapsign, ErroZapsign, type EnvelopeDetalhe, type EnvelopeIndice, type FonteZapsign } from '../src/main/ferramentas/zapsign';
+import { grauNome } from '../src/main/ferramentas/nomes';
 import { etapaZapsign, interpretarBusca, MENSAGEM_SEM_TOKEN, tipoDoAssinado } from '../src/main/etapas/zapsign';
 import { inventariar, type Inventario } from '../src/main/etapas/inventario';
 import { Fila } from '../src/main/fila';
@@ -50,11 +51,11 @@ const semEspera = async () => {};
 
 describe('grauNome', () => {
   it('mesmo nome com ou sem acento e caixa é igual', () => {
-    expect(grauNome('Elisângela Cristina Mariano', 'ELISANGELA CRISTINA MARIANO')).toBe('igual');
+    expect(grauNome('Lúcia Helena Araújo', 'LUCIA HELENA ARAUJO')).toBe('igual');
   });
   it('nome da pasta mais curto ou com sobra ainda é parecido', () => {
-    expect(grauNome('Elisângela Mariano', 'Elisângela Cristina Mariano')).toBe('parecido');
-    expect(grauNome('Elisângela Cristina Mariano - Uber', 'Elisângela Cristina Mariano')).toBe('parecido');
+    expect(grauNome('Lúcia Araújo', 'Lúcia Helena Araújo')).toBe('parecido');
+    expect(grauNome('Lúcia Helena Araújo - Acme', 'Lúcia Helena Araújo')).toBe('parecido');
   });
   it('um só nome em comum não basta', () => {
     expect(grauNome('Maria', 'Maria Souza')).toBeNull();
@@ -73,7 +74,7 @@ describe('tipoDoAssinado e interpretarBusca', () => {
   it('entende link, e-mail ou nome', () => {
     expect(interpretarBusca('https://app.zapsign.com.br/verificar/1F2E3D4C-5B6A-4789-9abc-def012345678')).toEqual({ tipo: 'token', valor: '1f2e3d4c-5b6a-4789-9abc-def012345678' });
     expect(interpretarBusca(' cliente@gmail.com ')).toEqual({ tipo: 'email', valor: 'cliente@gmail.com' });
-    expect(interpretarBusca('Elisângela Mariano')).toEqual({ tipo: 'nome', valor: 'Elisângela Mariano' });
+    expect(interpretarBusca('Lúcia Araújo')).toEqual({ tipo: 'nome', valor: 'Lúcia Araújo' });
   });
 });
 
@@ -98,6 +99,23 @@ describe('ClienteZapsign', () => {
       // logo em seguida, outra pasta procurando: usa o índice sem chamar a API
       await z.buscarPorNome('Cliente Código 012');
       expect(pedidos).toHaveLength(4);
+    } finally {
+      servidor.close();
+    }
+  });
+
+  it('guarda o telefone do signatário (serve para confirmar o cliente) e remonta um índice da versão antiga', async () => {
+    const docs = [{ token: 'env-1', name: 'Declaração de pobreza.docx', status: 'signed', created_at: new Date().toISOString(), signers: [{ nome: 'Lúcia Helena Araújo', status: 'assinou', telefone: '+55 31976543210' }] }];
+    const { url, servidor, pedidos } = await servidorFalso((p) => ({ status: 200, corpo: paginar(docs, p.params) }));
+    const arquivo = join(mkdtempSync(join(tmpdir(), 'zs-')), 'i.json');
+    // índice da versão 1 (sem telefone), já sincronizado: precisa ser remontado
+    writeFileSync(arquivo, JSON.stringify({ versao: 1, desde: '2020-01-01', sincronizadoEm: new Date().toISOString(), envelopes: [] }));
+    const z = new ClienteZapsign({ token: () => 'tok', arquivoIndice: arquivo, base: url, esperar: semEspera });
+    try {
+      const r = await z.buscarPorNome('Lúcia Helena Araújo');
+      expect(pedidos).toHaveLength(1);
+      expect(r.envelopes[0].signatarios[0]).toEqual({ nome: 'Lúcia Helena Araújo', status: 'assinou', telefone: '+55 31976543210' });
+      expect(JSON.parse(readFileSync(arquivo, 'utf8')).versao).toBe(2);
     } finally {
       servidor.close();
     }
@@ -165,7 +183,7 @@ describe('ClienteZapsign', () => {
         status: 'signed',
         created_at: '2026-10-06T14:10:42Z',
         signed_file: 'https://s3/decl.pdf',
-        signers: [{ name: 'Elisângela Cristina Mariano', status: 'signed', signed_at: '2026-10-06T14:14:07Z' }],
+        signers: [{ name: 'Lúcia Helena Araújo', status: 'signed', signed_at: '2026-10-06T14:14:07Z' }],
         extra_docs: [
           { name: 'Contrato Trabalhista Furtado.docx', signed_file: 'https://s3/contrato.pdf' },
           { name: 'Procuração Trabalhista Furtado.docx', signed_file: 'https://s3/proc.pdf' },
@@ -175,7 +193,7 @@ describe('ClienteZapsign', () => {
     const z = new ClienteZapsign({ token: () => 'tok', arquivoIndice: join(mkdtempSync(join(tmpdir(), 'zs-')), 'i.json'), base: url, esperar: semEspera });
     try {
       const d = await z.detalhar('env-1');
-      expect(d.signatarios[0]).toEqual({ nome: 'Elisângela Cristina Mariano', status: 'signed', assinadoEm: '2026-10-06T14:14:07Z' });
+      expect(d.signatarios[0]).toEqual({ nome: 'Lúcia Helena Araújo', status: 'signed', assinadoEm: '2026-10-06T14:14:07Z' });
       expect(d.documentos.map((x) => x.nome)).toEqual(['Declaração de pobreza.docx', 'Contrato Trabalhista Furtado.docx', 'Procuração Trabalhista Furtado.docx']);
       expect(d.documentos[2].arquivoAssinado).toBe('https://s3/proc.pdf');
     } finally {
@@ -225,7 +243,7 @@ function envelope(token: string, cliente: string, criadoEm: string, status = 'si
 }
 
 /** Pasta como chega no escritório: sem os documentos assinados. */
-function pastaSemAssinados(nome = 'Elisângela Cristina Mariano', extras: Record<string, string> = {}) {
+function pastaSemAssinados(nome = 'Lúcia Helena Araújo', extras: Record<string, string> = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'zsp-'));
   const cliente = join(dir, nome);
   const pastaJob = join(dir, 'job');
@@ -247,7 +265,7 @@ function pastaSemAssinados(nome = 'Elisângela Cristina Mariano', extras: Record
 
 describe('etapaZapsign', () => {
   it('baixa procuração, declaração e contrato assinados e grava no padrão', async () => {
-    const e = envelope('env-1', 'ELISANGELA CRISTINA MARIANO', '2026-10-06T14:10:42Z');
+    const e = envelope('env-1', 'LUCIA HELENA ARAUJO', '2026-10-06T14:10:42Z');
     const registro: string[] = [];
     const { cliente, pastaJob, ctx, mensagens } = pastaSemAssinados();
     const r = await etapaZapsign(() => fonteFalsa([e.indice], { 'env-1': e.detalhe }, registro)).executar(ctx());
@@ -256,7 +274,7 @@ describe('etapaZapsign', () => {
     expect(readFileSync(join(cliente, 'Contratos', 'Procuração.pdf'), 'utf8')).toBe('%PDF-1.7 env-1/procuracao');
     expect(readFileSync(join(cliente, 'Contratos', 'Declaração.pdf'), 'utf8')).toBe('%PDF-1.7 env-1/declaracao');
     expect(readFileSync(join(cliente, 'Não juntar', 'Contrato Trabalhista.pdf'), 'utf8')).toBe('%PDF-1.7 env-1/contrato');
-    expect(registro[0]).toBe('nome:Elisângela Cristina Mariano');
+    expect(registro[0]).toBe('nome:Lúcia Helena Araújo');
     // o inventário foi refeito: a classificação já vê os assinados no lugar
     const inv = JSON.parse(readFileSync(join(pastaJob, 'inventario.json'), 'utf8')) as Inventario;
     expect(inv.arquivos.filter((a) => a.situacao === 'no-lugar').map((a) => a.relativo).sort()).toEqual(
@@ -297,20 +315,20 @@ describe('etapaZapsign', () => {
     const { ctx, cliente } = pastaSemAssinados();
     const r = await etapaZapsign(() => fonteFalsa([e.indice], { 'env-1': e.detalhe })).executar(ctx());
     expect(r.status).toBe('pendente');
-    expect(r.status === 'pendente' && r.motivo).toMatch(/Não achei no ZapSign.*Elisângela Cristina Mariano/);
+    expect(r.status === 'pendente' && r.motivo).toMatch(/Não achei no ZapSign.*Lúcia Helena Araújo/);
     expect(existsSync(join(cliente, 'Contratos'))).toBe(false);
   });
 
   it('envelope ainda não assinado fica pendente', async () => {
-    const e = envelope('env-1', 'Elisângela Cristina Mariano', '2026-10-06T14:10:42Z', 'pending');
+    const e = envelope('env-1', 'Lúcia Helena Araújo', '2026-10-06T14:10:42Z', 'pending');
     const { ctx } = pastaSemAssinados();
     const r = await etapaZapsign(() => fonteFalsa([e.indice], { 'env-1': e.detalhe })).executar(ctx());
     expect(r.status === 'pendente' && r.motivo).toMatch(/ainda não foi assinado/);
   });
 
   it('usa o envelope assinado mais novo quando há mais de um', async () => {
-    const velho = envelope('env-velho', 'Elisângela Cristina Mariano', '2026-09-01T10:00:00Z');
-    const novo = envelope('env-novo', 'Elisângela Cristina Mariano', '2026-10-06T10:00:00Z');
+    const velho = envelope('env-velho', 'Lúcia Helena Araújo', '2026-09-01T10:00:00Z');
+    const novo = envelope('env-novo', 'Lúcia Helena Araújo', '2026-10-06T10:00:00Z');
     const { cliente, ctx } = pastaSemAssinados();
     await etapaZapsign(() => fonteFalsa([velho.indice, novo.indice], { 'env-velho': velho.detalhe, 'env-novo': novo.detalhe })).executar(ctx());
     expect(readFileSync(join(cliente, 'Contratos', 'Procuração.pdf'), 'utf8')).toContain('env-novo');

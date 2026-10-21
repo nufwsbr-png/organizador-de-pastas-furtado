@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { grauNome } from './nomes';
 
 /**
  * ZapSign pela API (só leitura): acha os envelopes do cliente e baixa os PDFs assinados.
@@ -14,6 +15,8 @@ const DIA = 86_400_000;
 export interface SignatarioIndice {
   nome: string;
   status: string;
+  /** Telefone do signatário como veio do ZapSign (ex.: "+55 31976543210"); serve para confirmar o cliente. */
+  telefone?: string;
 }
 
 /** Documento principal de um envelope (os anexos vêm na listagem sem signatários e são ignorados). */
@@ -36,7 +39,7 @@ export interface EnvelopeDetalhe {
   nome: string;
   status: string;
   criadoEm: string;
-  signatarios: { nome: string; status: string; assinadoEm: string | null }[];
+  signatarios: { nome: string; status: string; assinadoEm: string | null; telefone?: string }[];
   /** Documento principal e anexos, nessa ordem. */
   documentos: DocumentoEnvelope[];
 }
@@ -49,8 +52,11 @@ export interface FonteZapsign {
   baixar(url: string): Promise<Buffer>;
 }
 
+/** Versão 2: signatários com telefone (um índice antigo é remontado). */
+const VERSAO_INDICE = 2;
+
 interface ArquivoIndice {
-  versao: 1;
+  versao: typeof VERSAO_INDICE;
   /** Data (AAAA-MM-DD) desde a qual o índice tem todos os envelopes. */
   desde: string;
   sincronizadoEm: string | null;
@@ -64,6 +70,9 @@ interface SignatarioApi {
   status?: string;
   signed_at?: string | null;
   data_hora_assinatura?: string | null;
+  phone_country?: string;
+  phone_number?: string;
+  telefone?: string;
 }
 
 interface DocumentoApi {
@@ -153,7 +162,12 @@ export class ClienteZapsign implements FonteZapsign {
       nome: d.name,
       status: d.status,
       criadoEm: d.created_at,
-      signatarios: (d.signers ?? []).map((s) => ({ nome: s.name ?? s.nome ?? '', status: s.status ?? '', assinadoEm: s.signed_at ?? s.data_hora_assinatura ?? null })),
+      signatarios: (d.signers ?? []).map((s) => ({
+        nome: s.name ?? s.nome ?? '',
+        status: s.status ?? '',
+        assinadoEm: s.signed_at ?? s.data_hora_assinatura ?? null,
+        telefone: telefoneDoSignatario(s),
+      })),
       documentos: [{ nome: d.name, arquivoAssinado: d.signed_file ?? null }, ...(d.extra_docs ?? []).map((x) => ({ nome: x.name, arquivoAssinado: x.signed_file ?? null }))],
     };
   }
@@ -180,7 +194,7 @@ export class ClienteZapsign implements FonteZapsign {
     const porToken = new Map(incremental ? indice.envelopes.map((e) => [e.token, e]) : []);
     for (const e of novos) porToken.set(e.token, e);
     this.indice = {
-      versao: 1,
+      versao: VERSAO_INDICE,
       desde: inicioJanela,
       sincronizadoEm: new Date(inicio).toISOString(),
       envelopes: [...porToken.values()].filter((e) => e.criadoEm.slice(0, 10) >= inicioJanela).sort((a, b) => b.criadoEm.localeCompare(a.criadoEm)),
@@ -242,11 +256,11 @@ export class ClienteZapsign implements FonteZapsign {
     if (this.indice) return this.indice;
     try {
       const dados = JSON.parse(readFileSync(this.opcoes.arquivoIndice, 'utf8')) as ArquivoIndice;
-      if (dados.versao === 1 && Array.isArray(dados.envelopes)) this.indice = dados;
+      if (dados.versao === VERSAO_INDICE && Array.isArray(dados.envelopes)) this.indice = dados;
     } catch {
       /* sem índice ainda */
     }
-    this.indice ??= { versao: 1, desde: dia(Date.now()), sincronizadoEm: null, envelopes: [] };
+    this.indice ??= { versao: VERSAO_INDICE, desde: dia(Date.now()), sincronizadoEm: null, envelopes: [] };
     return this.indice;
   }
 
@@ -268,39 +282,16 @@ function paraIndice(d: DocumentoApi): EnvelopeIndice {
     nome: d.name,
     status: d.status,
     criadoEm: d.created_at,
-    signatarios: (d.signers ?? []).map((s) => ({ nome: s.nome ?? s.name ?? '', status: s.status ?? '' })),
+    signatarios: (d.signers ?? []).map((s) => ({ nome: s.nome ?? s.name ?? '', status: s.status ?? '', telefone: telefoneDoSignatario(s) })),
   };
+}
+
+/** A listagem traz "telefone"; o detalhe, "phone_country" + "phone_number". */
+function telefoneDoSignatario(s: SignatarioApi): string | undefined {
+  const t = s.telefone ?? (s.phone_number ? `${s.phone_country ?? ''}${s.phone_number}` : '');
+  return t || undefined;
 }
 
 function dia(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10);
-}
-
-/** Palavras de um nome sem acento, minúsculas; só as com mais de 2 letras contam. */
-export function palavrasDoNome(nome: string): string[] {
-  return nome
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, ' ')
-    .split(/\s+/)
-    .filter((p) => p.length > 2);
-}
-
-/**
- * Quanto o nome procurado (o da pasta) bate com o do signatário:
- * 'igual' = mesmas palavras; 'parecido' = um contém todas as palavras do outro (no mínimo duas);
- * null = não é a mesma pessoa.
- */
-export function grauNome(procurado: string, signatario: string): 'igual' | 'parecido' | null {
-  const a = palavrasDoNome(procurado);
-  const b = palavrasDoNome(signatario);
-  if (a.length === 0 || b.length === 0) return null;
-  const sa = new Set(a);
-  const sb = new Set(b);
-  if (a.join(' ') === b.join(' ')) return 'igual';
-  const aEmB = a.every((p) => sb.has(p));
-  const bEmA = b.every((p) => sa.has(p));
-  if ((aEmB && a.length >= 2) || (bEmA && b.length >= 2)) return 'parecido';
-  return null;
 }

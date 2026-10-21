@@ -1,4 +1,4 @@
-import { classificarCaminho, PASTAS_PADRAO, DOCUMENTOS_PADRAO, nomeFinal, ehAudio, ehImagem, ehPdf } from '../src/main/padrao';
+import { classificarCaminho, PASTAS_PADRAO, DOCUMENTOS_PADRAO, nomeFinal, ehAudio, ehImagem, ehPdf, momentoNoNome, ordenarPorMomento } from '../src/main/padrao';
 
 describe('padrão da pasta do cliente', () => {
   it('conhece as pastas e os documentos do padrão', () => {
@@ -79,5 +79,19 @@ describe('padrão da pasta do cliente', () => {
     expect(ehImagem('x.jpeg')).toBe(true);
     expect(ehImagem('x.PNG')).toBe(true);
     expect(ehPdf('x.pdf')).toBe(true);
+  });
+});
+
+describe('data e hora no nome do arquivo', () => {
+  it('lê dia-mês-ano e a hora em vários jeitos', () => {
+    expect(momentoNoNome('Transcricao - 19-10-2026 - 16h45 - Gustavo Castelli.txt')).toBe('2026-10-19 16:45');
+    expect(momentoNoNome('ligacao 2026-10-19 09.05.wav')).toBe('2026-10-19 09:05');
+    expect(momentoNoNome('Transcrição.txt')).toBeNull();
+  });
+
+  it('ordena pela data e hora; os sem data vão por último', () => {
+    expect(
+      ordenarPorMomento(['Transcricao - 19-10-2026 - 16h56 - X.txt', 'Transcrição.txt', 'Transcricao - 01-11-2026 - 08h00 - X.txt', 'Transcricao - 19-10-2026 - 16h45 - X.txt']),
+    ).toEqual(['Transcricao - 19-10-2026 - 16h45 - X.txt', 'Transcricao - 19-10-2026 - 16h56 - X.txt', 'Transcricao - 01-11-2026 - 08h00 - X.txt', 'Transcrição.txt']);
   });
 });

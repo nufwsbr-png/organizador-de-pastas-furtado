@@ -6,7 +6,7 @@ import { createCanvas } from '@napi-rs/canvas';
 import { extrairTexto, rasterizar, contarPaginas } from '../src/main/ferramentas/pdf';
 import { imagensParaPdf } from '../src/main/ferramentas/imagem';
 
-const PASTA_REAL = 'C:\\Users\\Computador08\\Downloads\\Elisângela Cristina Mariano';
+const PASTA_REAL = process.env.PASTA_ORIGEM ?? '';
 
 function temp(): string {
   return mkdtempSync(join(tmpdir(), 'pdf-'));

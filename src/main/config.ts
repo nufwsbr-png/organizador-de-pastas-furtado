@@ -2,17 +2,33 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 export type Provedor = 'claude' | 'codex';
+export type Tema = 'sistema' | 'claro' | 'escuro';
 
 export interface Ajustes {
   /** Provedor de IA escolhido na tela de login. */
   provedor: Provedor | null;
   /** Quantas pastas são organizadas ao mesmo tempo. */
   paralelismo: number;
+  /** Endereço do WAHA (ex.: https://pastas.nufws.com.br) e sessão do WhatsApp do escritório. */
+  wahaUrl: string;
+  wahaSessao: string;
+  /** Link ou ID da planilha Contratos/Entrevistas/Pastas e a aba dos clientes. */
+  planilhaId: string;
+  planilhaAba: string;
+  /** Modo claro, noturno ou igual ao Windows. */
+  tema: Tema;
 }
 
-const PADRAO: Ajustes = { provedor: null, paralelismo: 3 };
+const PADRAO: Ajustes = { provedor: null, paralelismo: 3, wahaUrl: '', wahaSessao: 'furtado', planilhaId: '', planilhaAba: 'Lançamentos', tema: 'sistema' };
 const CHAVE_ELEVENLABS = 'ELEVENLABS_API_KEY';
 const TOKEN_ZAPSIGN = 'ZAPSIGN_API_TOKEN';
+const CHAVE_WAHA = 'WAHA_API_KEY';
+const CONTA_SERVICO = 'GOOGLE_SERVICE_ACCOUNT_JSON_BASE64';
+
+export interface ContaServico {
+  email: string;
+  credenciais: object;
+}
 
 /** Ajustes do app (settings.json) e segredos (.env) guardados na pasta de dados do usuário. */
 export class Config {
@@ -62,6 +78,45 @@ export class Config {
 
   tokenZapsign(): string | null {
     return this.segredo(TOKEN_ZAPSIGN);
+  }
+
+  chaveWaha(): string | null {
+    return this.segredo(CHAVE_WAHA);
+  }
+
+  definirChaveWaha(chave: string): void {
+    this.definirSegredo(CHAVE_WAHA, chave);
+  }
+
+  /** Conta de serviço do Google (o JSON baixado no Google Cloud), guardada em base64 no .env. */
+  contaServico(): ContaServico | null {
+    const base64 = this.segredo(CONTA_SERVICO);
+    if (!base64) return null;
+    try {
+      const credenciais = JSON.parse(Buffer.from(base64, 'base64').toString('utf8')) as { client_email?: string };
+      return credenciais.client_email ? { email: credenciais.client_email, credenciais } : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Grava no .env, em base64, o JSON da conta de serviço (ou apaga, com null). Devolve o e-mail da conta. */
+  definirContaServico(origem: string | null): string | null {
+    if (origem === null) {
+      this.definirSegredo(CONTA_SERVICO, '');
+      return null;
+    }
+    let dados: { type?: string; client_email?: string; private_key?: string };
+    try {
+      dados = JSON.parse(readFileSync(origem, 'utf8'));
+    } catch {
+      throw new Error('Esse arquivo não é um JSON válido.');
+    }
+    if (dados.type !== 'service_account' || !dados.client_email || !dados.private_key) {
+      throw new Error('Esse JSON não é de uma conta de serviço do Google (falta type "service_account", client_email ou private_key).');
+    }
+    this.definirSegredo(CONTA_SERVICO, Buffer.from(JSON.stringify(dados)).toString('base64'));
+    return dados.client_email;
   }
 
   definirTokenZapsign(token: string): void {

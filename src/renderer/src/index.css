@@ -1,33 +1,82 @@
-/* ID visual Nufws v2.0 (pasta "ID Visual", identidade-visual.html): grafite como base, roxo como sinal,
-   uma seta pra frente. Outfit leve nos títulos, DM Sans no resto, um único ponto de degradê por tela. */
+/* ID visual Nufws v2.3 (pasta "ID Visual", identidade-visual.html, 21/10/2026): base branca, grafite como voz,
+   violeta profundo #5B21D6 como acento (botão principal, símbolo, um risco, uma linha em degradê por tela).
+   Outfit SemiBold nos títulos, DM Sans no resto, nada abaixo de 13 px. O modo noturno usa os tons escuros da marca
+   (Grafite Base, Superfície, Linha, Névoa) com o mesmo violeta. Quem escolhe o modo é o processo principal
+   (nativeTheme), que muda o prefers-color-scheme desta tela. */
 @import './fonts/fontes.css';
 
 :root {
-  --preto: #0d0b12; /* Grafite Base: fundo de tudo */
-  --noite: #12101a; /* meio-tom: atrás de cartões */
-  --carvao: #171522; /* Grafite Superfície: cartões e blocos */
-  --carvao-alto: #1d1a2b; /* cartão selecionado */
-  --linha: #2a2739; /* Grafite Linha: bordas e divisórias */
-  --branco: #ffffff; /* títulos */
-  --gelo: #edeaf5; /* Névoa: texto corrido */
-  --cinza: #9b8fc4; /* Cinza Texto: apoio, legenda e rótulos */
-  --cinza-2: #6e6793; /* cinza apagado: rótulo de canto, hora */
+  color-scheme: light;
+  --fundo: #ffffff; /* Branco: fundo de tudo */
+  --fundo-2: #f7f6fa; /* Superfície fria: lista lateral e fundo atrás de cartões */
+  --superficie: #ffffff; /* cartão: sempre branco, separado pela linha */
+  --campo: #ffffff;
+  --linha: #e6e3ee;
+  --linha-forte: #d4d0de;
+  --titulo-cor: #111113; /* Grafite: títulos e ícones */
+  --texto-cor: #1d1d1f; /* Cinza escuro: texto corrido */
+  --apoio: #515154; /* Cinza texto: apoio e rótulos */
+  --legenda: #6e6e73; /* Cinza legenda: o mais claro permitido em texto */
+  --rastro: #111113; /* rastro da seta do símbolo */
+  --contorno: rgba(17, 17, 19, 0.45); /* botão secundário */
+  --contorno-hover: #111113;
+  --realce: rgba(17, 17, 19, 0.04);
+  --roxo: #5b21d6; /* Violeta profundo: o acento */
+  --roxo-hover: #4c1bb5;
   --indigo: #3a1078;
-  --roxo: #7b2ff7; /* botão, destaque e brilho; em texto só acima de 24 px */
-  --roxo-claro: #8f4bff;
-  --violeta: #b36bff; /* realce de texto pequeno, link, ícone, risco */
-  --lilas: #d8a5ff; /* ponta de luz e alerta */
-  --grad: linear-gradient(100deg, #3a1078 0%, #7b2ff7 55%, #d8a5ff 100%);
-  --grad-texto: linear-gradient(90deg, #7b2ff7 0%, #b36bff 55%, #d8a5ff 100%);
+  --lilas: #8b5cf6; /* Violeta claro: alerta */
+  --foco: #5b21d6;
+  --alerta: #3a1078;
+  --alerta-borda: rgba(139, 92, 246, 0.55);
+  --alerta-fundo: rgba(139, 92, 246, 0.08);
   /* única cor de função fora da paleta: erro */
-  --erro: #ff6b8b;
+  --erro: #b42318;
+  --erro-borda: rgba(180, 35, 24, 0.4);
+  --erro-fundo: rgba(180, 35, 24, 0.06);
+  --sombra: 0 12px 32px rgba(17, 17, 19, 0.12);
+  --grad: linear-gradient(100deg, #3a1078 0%, #5b21d6 55%, #9f67ff 100%); /* Degradê Onda */
+  --grad-texto: linear-gradient(90deg, #3a1078 0%, #5b21d6 60%, #8b5cf6 100%);
+  --mancha-1: 0.05;
+  --mancha-2: 0.06;
   --titulo: 'Outfit', system-ui, sans-serif;
   --texto: 'DM Sans', system-ui, sans-serif;
   font-family: var(--texto);
-  color: var(--gelo);
+  color: var(--texto-cor);
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --fundo: #0b0b0d; /* Grafite Base */
+    --fundo-2: #0f0f12;
+    --superficie: #151517;
+    --campo: #0f0f12;
+    --linha: #27272b;
+    --linha-forte: #3a3a40;
+    --titulo-cor: #ffffff;
+    --texto-cor: #ededef; /* Névoa */
+    --apoio: #9a9aa1;
+    --legenda: #84848c;
+    --rastro: #ffffff;
+    --contorno: rgba(255, 255, 255, 0.45);
+    --contorno-hover: #ffffff;
+    --realce: rgba(255, 255, 255, 0.05);
+    --roxo-hover: #6a32e6;
+    --foco: #9f67ff;
+    --alerta: #c9b5ff;
+    --alerta-borda: rgba(159, 103, 255, 0.55);
+    --alerta-fundo: rgba(159, 103, 255, 0.1);
+    --erro: #ff7a8a;
+    --erro-borda: rgba(255, 122, 138, 0.45);
+    --erro-fundo: rgba(255, 122, 138, 0.08);
+    --sombra: 0 12px 32px rgba(0, 0, 0, 0.5);
+    --grad-texto: linear-gradient(90deg, #7c4dff 0%, #9f67ff 55%, #c9b5ff 100%);
+    --mancha-1: 0.16;
+    --mancha-2: 0.3;
+  }
 }
 
 * {
@@ -35,16 +84,16 @@
 }
 body {
   margin: 0;
-  background: var(--preto);
+  background: var(--fundo);
   overflow: hidden;
 }
 h1,
 h2,
 h3 {
   font-family: var(--titulo);
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--branco);
+  color: var(--titulo-cor);
   margin: 0;
   line-height: 1.15;
 }
@@ -58,23 +107,31 @@ h2 {
 p {
   margin: 6px 0;
 }
+b {
+  color: var(--titulo-cor);
+  font-weight: 600;
+}
 .sub,
 .caminho {
-  color: var(--cinza);
-  font-size: 13px;
+  color: var(--apoio);
+  font-size: 13.5px;
 }
 .caminho {
-  font-size: 12px;
-  color: var(--cinza-2);
+  font-size: 13px;
+  color: var(--legenda);
   word-break: break-all;
 }
-/* Rótulo: DM Sans 500, caixa alta, espaço 0,3em */
-.rotulo {
-  font-size: 11px;
-  letter-spacing: 0.3em;
+/* Rótulo: DM Sans SemiBold, caixa alta, espaço 0,12em */
+.rotulo,
+.mini {
+  font-size: 13px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--cinza);
-  font-weight: 500;
+  color: var(--apoio);
+  font-weight: 600;
+}
+.mini {
+  color: var(--texto-cor);
 }
 /* Eyebrow: rótulo com o risco violeta de 36 px embaixo (marca começo de bloco) */
 .eyebrow::after {
@@ -82,16 +139,10 @@ p {
   display: block;
   width: 36px;
   height: 2px;
-  background: var(--violeta);
-  margin-top: 12px;
+  background: var(--roxo);
+  margin-top: 10px;
 }
-.mini {
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--violeta);
-  font-weight: 600;
-}
+/* uma expressão em degradê por título, no máximo */
 .destaque {
   background: var(--grad-texto);
   -webkit-background-clip: text;
@@ -99,39 +150,39 @@ p {
   color: transparent;
 }
 code {
-  font-size: 12px;
-  background: var(--preto);
+  font-size: 13px;
+  background: var(--fundo-2);
   border: 1px solid var(--linha);
   padding: 1px 6px;
   border-radius: 6px;
-  color: var(--gelo);
+  color: var(--texto-cor);
 }
 ::selection {
   background: var(--roxo);
-  color: var(--branco);
+  color: #ffffff;
 }
 
-/* Botões: principal = pílula roxa com texto branco (e seta nos de ação); secundário = contorno branco */
+/* Botões: principal = pílula violeta com texto branco, sem brilho; secundário = contorno grafite (branco no noturno) */
 button {
   font: inherit;
   font-weight: 500;
   padding: 8px 18px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--contorno);
   background: transparent;
   cursor: pointer;
-  color: var(--branco);
+  color: var(--titulo-cor);
   white-space: nowrap;
-  transition: border-color 0.15s, background 0.15s, color 0.15s, opacity 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, opacity 0.15s;
 }
 button:hover:not(:disabled) {
-  border-color: var(--branco);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--contorno-hover);
+  background: var(--realce);
 }
 button:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--violeta);
+  outline: 2px solid var(--foco);
   outline-offset: 2px;
 }
 button:disabled {
@@ -141,17 +192,12 @@ button:disabled {
 button.primario {
   background: var(--roxo);
   border-color: var(--roxo);
-  color: var(--branco);
+  color: #ffffff;
   font-weight: 600;
-  box-shadow: 0 0 22px rgba(123, 47, 247, 0.3);
 }
 button.primario:hover:not(:disabled) {
-  background: var(--roxo-claro);
-  border-color: var(--roxo-claro);
-  box-shadow: 0 0 30px rgba(123, 47, 247, 0.45);
-}
-button.primario:disabled {
-  box-shadow: none;
+  background: var(--roxo-hover);
+  border-color: var(--roxo-hover);
 }
 .seta {
   font-family: var(--titulo);
@@ -159,85 +205,147 @@ button.primario:disabled {
 }
 button.discreto {
   border-color: transparent;
-  color: var(--cinza);
+  color: var(--apoio);
 }
 button.discreto:hover:not(:disabled) {
-  color: var(--branco);
-  border-color: var(--linha);
-  background: transparent;
+  color: var(--titulo-cor);
+  border-color: transparent;
 }
-button.perigo {
+button.perigo,
+button.perigo:hover:not(:disabled) {
   color: var(--erro);
 }
 button.pequeno {
-  padding: 3px 10px;
-  font-size: 12px;
+  padding: 2px 10px;
+  font-size: 13px;
 }
 button.link {
   border: none;
   background: none;
-  color: var(--violeta);
+  color: var(--titulo-cor);
   padding: 0;
+  text-decoration: underline;
+  text-decoration-color: var(--linha-forte);
+  text-underline-offset: 3px;
 }
 button.link:hover:not(:disabled) {
   background: none;
-  color: var(--lilas);
+  text-decoration-color: var(--roxo);
+}
+/* Ícone de linha fina: traço de 1,6 px na cor do texto, sem preenchimento */
+button.icone {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+}
+button.icone svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* Seletor de opções (Aparência) */
+.segmentos {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--linha);
+  border-radius: 999px;
+  background: var(--fundo-2);
+}
+.segmentos button {
+  border-color: transparent;
+  padding: 6px 16px;
+  color: var(--apoio);
+}
+.segmentos button.escolhido,
+.segmentos button.escolhido:hover:not(:disabled) {
+  background: var(--titulo-cor);
+  border-color: var(--titulo-cor);
+  color: var(--fundo);
+  font-weight: 600;
 }
 input,
 select {
   font: inherit;
   padding: 8px 12px;
-  border: 1px solid var(--linha);
+  border: 1px solid var(--linha-forte);
   border-radius: 10px;
-  background: var(--noite);
-  color: var(--gelo);
+  background: var(--campo);
+  color: var(--texto-cor);
 }
 input:focus,
 select:focus {
   outline: none;
-  border-color: var(--violeta);
+  border-color: var(--foco);
 }
 input {
   min-width: 320px;
 }
 input::placeholder {
-  color: var(--cinza-2);
+  color: var(--legenda);
 }
 select option {
-  background: var(--carvao);
+  background: var(--superficie);
 }
 .erro {
   color: var(--erro);
-  background: rgba(255, 107, 139, 0.08);
-  border: 1px solid rgba(255, 107, 139, 0.35);
+  background: var(--erro-fundo);
+  border: 1px solid var(--erro-borda);
   padding: 8px 12px;
   border-radius: 10px;
 }
+/* Situação no cartão de login: ponto cheio = pronto, anel = falta algo */
+.bom,
+.ruim {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 .bom {
-  color: var(--violeta);
+  color: var(--titulo-cor);
 }
 .ruim {
-  color: var(--lilas);
+  color: var(--alerta);
+}
+.bom::before,
+.ruim::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.bom::before {
+  background: var(--roxo);
+}
+.ruim::before {
+  border: 1.5px solid var(--lilas);
 }
 .carregando {
   padding: 40px;
-  color: var(--cinza);
+  color: var(--apoio);
 }
 .aviso-flutuante {
   position: fixed;
   top: 14px;
   right: 14px;
-  background: var(--carvao-alto);
+  background: var(--superficie);
   border: 1px solid var(--linha);
-  border-left: 2px solid var(--violeta);
-  color: var(--gelo);
+  border-left: 2px solid var(--roxo);
+  color: var(--texto-cor);
   padding: 10px 14px;
   border-radius: 12px;
   z-index: 10;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--sombra);
 }
 
-/* Mancha de fundo: brilho grande e desfocado no canto, fraco, nunca atrás de texto pequeno */
+/* Mancha de fundo: rara e fraca, no canto, nunca atrás de texto pequeno (só no login) */
 .mancha {
   position: fixed;
   border-radius: 50%;
@@ -251,7 +359,7 @@ select option {
   background: var(--roxo);
   right: -160px;
   top: -200px;
-  opacity: 0.22;
+  opacity: var(--mancha-1);
 }
 .mancha-indigo {
   width: 480px;
@@ -259,15 +367,21 @@ select option {
   background: var(--indigo);
   right: 200px;
   bottom: -300px;
-  opacity: 0.45;
+  opacity: var(--mancha-2);
 }
-/* Linha em degradê: uma por tela, entra e sai do quadro */
+/* Linha em degradê: uma por tela, sem brilho */
 .linha-grad {
   height: 2px;
   background: var(--grad);
-  box-shadow: 0 0 14px rgba(123, 47, 247, 0.55), 0 0 26px rgba(216, 165, 255, 0.18);
   position: relative;
   z-index: 1;
+}
+
+/* Símbolo: o rastro usa a cor do tema */
+.simbolo {
+  display: block;
+  flex-shrink: 0;
+  color: var(--rastro);
 }
 
 /* Logo: símbolo + nome Nufws (Outfit 600, só o N maiúsculo) + descritor */
@@ -276,10 +390,9 @@ select option {
   align-items: center;
   gap: 14px;
 }
-.logo img {
+.logo .simbolo {
   width: 46px;
   height: 46px;
-  display: block;
 }
 .logo .nome {
   font-family: var(--titulo);
@@ -287,16 +400,16 @@ select option {
   font-size: 34px;
   letter-spacing: -0.025em;
   line-height: 1;
-  color: var(--branco);
+  color: var(--titulo-cor);
 }
 .logo .nome small {
   display: block;
   font-family: var(--texto);
-  font-weight: 400;
-  font-size: 10px;
-  letter-spacing: 0.26em;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--cinza);
+  color: var(--apoio);
   margin-top: 7px;
 }
 
@@ -315,26 +428,27 @@ select option {
   display: flex;
   flex-direction: column;
 }
-.tela-login .logo {
+.topo-login {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 52px;
 }
 .tela-login header {
   margin-bottom: 34px;
 }
 .tela-login h1 {
-  font-size: 50px;
-  font-weight: 300;
+  font-size: 52px;
   line-height: 1.02;
   letter-spacing: -0.03em;
   margin: 24px 0 16px;
 }
 .tela-login h1 strong {
-  font-weight: 500;
+  font-weight: 700;
 }
 .tela-login header p {
-  color: var(--cinza);
-  font-size: 16px;
-  font-weight: 300;
+  color: var(--apoio);
+  font-size: 17px;
   max-width: 680px;
 }
 .cartoes {
@@ -343,7 +457,7 @@ select option {
   gap: 18px;
 }
 .cartao {
-  background: var(--carvao);
+  background: var(--superficie);
   border: 1px solid var(--linha);
   border-radius: 18px;
   padding: 24px 26px;
@@ -351,8 +465,11 @@ select option {
   flex-direction: column;
   gap: 10px;
 }
+.cartao h2 {
+  font-size: 20px;
+}
 .cartao-ativo {
-  border-color: rgba(123, 47, 247, 0.7);
+  border-color: var(--roxo);
 }
 .cartao .acoes {
   display: flex;
@@ -361,13 +478,13 @@ select option {
   margin-top: 4px;
 }
 .cartao .status {
-  font-size: 13px;
+  font-size: 13.5px;
 }
 .rodape {
   margin-top: auto;
   padding-top: 28px;
-  color: var(--cinza-2);
-  font-size: 12.5px;
+  color: var(--legenda);
+  font-size: 13px;
 }
 
 /* Barra do topo */
@@ -377,7 +494,7 @@ select option {
   align-items: center;
   gap: 16px;
   padding: 12px 20px;
-  background: var(--preto);
+  background: var(--fundo);
   position: relative;
   z-index: 1;
   height: 64px;
@@ -396,14 +513,12 @@ select option {
 .marca .simbolo {
   width: 32px;
   height: 32px;
-  display: block;
-  flex-shrink: 0;
 }
 .marca-sub {
   display: flex;
   gap: 12px;
-  font-size: 12px;
-  color: var(--cinza);
+  font-size: 13px;
+  color: var(--apoio);
   white-space: nowrap;
 }
 .marca-sub span {
@@ -411,20 +526,19 @@ select option {
   align-items: center;
   gap: 6px;
 }
+/* Indicador: ponto cheio = configurado, anel = falta */
 .ponto {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: var(--cinza-2);
   display: inline-block;
   flex-shrink: 0;
 }
 .ponto-ok {
-  background: var(--violeta);
+  background: var(--roxo);
 }
 .ponto-falta {
-  background: var(--lilas);
-  box-shadow: 0 0 0 2px rgba(216, 165, 255, 0.2);
+  border: 1.5px solid var(--lilas);
 }
 
 /* Principal */
@@ -433,20 +547,19 @@ select option {
 }
 .vazio {
   text-align: center;
-  color: var(--cinza);
+  color: var(--apoio);
   margin: 110px auto 0;
   max-width: 540px;
   position: relative;
   z-index: 1;
 }
-.vazio img {
+.vazio .simbolo {
   width: 64px;
-  margin-bottom: 18px;
-  filter: drop-shadow(0 0 24px rgba(123, 47, 247, 0.35));
+  height: 64px;
+  margin: 0 auto 18px;
 }
 .vazio h2 {
   font-size: 34px;
-  font-weight: 300;
   letter-spacing: -0.03em;
   margin-bottom: 12px;
 }
@@ -459,20 +572,20 @@ select option {
 }
 .lista-jobs {
   margin: 0;
-  padding: 16px 12px 24px;
+  padding: 18px 12px 24px;
   overflow-y: auto;
   border-right: 1px solid var(--linha);
-  background: var(--noite);
+  background: var(--fundo-2);
 }
 .grupo + .grupo {
-  margin-top: 20px;
+  margin-top: 22px;
 }
 .grupo-cabecalho {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  padding: 0 4px 9px;
+  padding: 0 4px 10px;
 }
 .grupo-cabecalho .rotulo {
   display: inline-flex;
@@ -481,17 +594,18 @@ select option {
   white-space: nowrap;
 }
 .contagem {
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 0;
-  color: var(--gelo);
-  background: var(--carvao);
+  line-height: 20px;
+  color: var(--texto-cor);
+  background: var(--superficie);
   border: 1px solid var(--linha);
   border-radius: 999px;
   padding: 0 8px;
 }
 .grupo-nota {
-  font-size: 12px;
-  color: var(--cinza);
+  font-size: 13px;
+  color: var(--legenda);
   white-space: nowrap;
 }
 .grupo ul {
@@ -500,25 +614,26 @@ select option {
   padding: 0;
 }
 .grupo-vazio {
-  font-size: 12.5px;
-  color: var(--cinza-2);
+  font-size: 13px;
+  color: var(--legenda);
   padding: 2px 4px 4px;
 }
 .job {
-  background: var(--carvao);
+  background: var(--superficie);
   border: 1px solid var(--linha);
   border-radius: 14px;
   padding: 12px 14px;
   margin-bottom: 8px;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 .job:hover {
-  border-color: #3a3550;
+  border-color: var(--linha-forte);
 }
-.job-selecionado {
-  border-color: rgba(123, 47, 247, 0.75) !important;
-  background: var(--carvao-alto);
+.job-selecionado,
+.job-selecionado:hover {
+  border-color: var(--roxo);
+  box-shadow: inset 0 0 0 1px var(--roxo);
 }
 .job-linha {
   display: flex;
@@ -528,16 +643,16 @@ select option {
 }
 .job-nome {
   font-family: var(--titulo);
-  font-weight: 400;
+  font-weight: 500;
   font-size: 15.5px;
-  color: var(--branco);
+  color: var(--titulo-cor);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .job-etapa {
-  color: var(--cinza);
-  font-size: 12px;
+  color: var(--apoio);
+  font-size: 13px;
   margin-top: 6px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -547,42 +662,46 @@ select option {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-weight: 500;
-  padding: 3px 9px;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
+  padding: 0 10px;
   border-radius: 999px;
   border: 1px solid var(--linha);
-  color: var(--cinza);
+  color: var(--apoio);
   white-space: nowrap;
   flex-shrink: 0;
 }
 .etiqueta-rodando {
-  border-color: rgba(123, 47, 247, 0.7);
-  background: rgba(123, 47, 247, 0.16);
-  color: var(--gelo);
+  border-color: var(--roxo);
+  background: var(--roxo);
+  color: #ffffff;
 }
 .etiqueta-rodando::before {
   content: '';
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--violeta);
+  background: #ffffff;
   animation: pulsar 1.2s ease-in-out infinite;
 }
+.etiqueta-aguardando {
+  border-color: var(--roxo);
+  color: var(--titulo-cor);
+}
 .etiqueta-concluido {
-  border-color: rgba(179, 107, 255, 0.45);
-  color: var(--violeta);
+  border-color: var(--linha-forte);
+  color: var(--titulo-cor);
 }
 .etiqueta-atencao,
 .etiqueta-pausado {
-  border-color: rgba(216, 165, 255, 0.55);
-  background: rgba(216, 165, 255, 0.08);
-  color: var(--lilas);
+  border-color: var(--alerta-borda);
+  background: var(--alerta-fundo);
+  color: var(--alerta);
 }
 .etiqueta-erro {
-  border-color: rgba(255, 107, 139, 0.55);
+  border-color: var(--erro-borda);
+  background: var(--erro-fundo);
   color: var(--erro);
 }
 @keyframes pulsar {
@@ -617,7 +736,7 @@ select option {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: var(--preto);
+  background: var(--fundo);
 }
 .detalhe-topo {
   display: flex;
@@ -630,7 +749,6 @@ select option {
 }
 .detalhe-cabecalho h2 {
   font-size: 30px;
-  font-weight: 300;
   letter-spacing: -0.03em;
   margin: 10px 0 4px;
 }
@@ -643,28 +761,33 @@ select option {
 .motivo {
   padding: 12px 16px;
   border-radius: 14px;
-  background: var(--carvao);
+  background: var(--superficie);
   border: 1px solid var(--linha);
-  border-left: 2px solid var(--lilas);
-  color: var(--gelo);
+  border-left: 3px solid var(--lilas);
+  color: var(--texto-cor);
 }
 .motivo-erro {
   border-left-color: var(--erro);
 }
-.caixa-zapsign {
+.caixa-busca {
   padding: 16px 18px;
   border-radius: 14px;
-  background: var(--carvao);
+  background: var(--superficie);
   border: 1px solid var(--linha);
 }
-.caixa-zapsign .sub {
+.caixa-busca .sub {
   margin-top: 8px;
 }
-.caixa-zapsign .linha {
+.caixa-busca .linha {
   margin-top: 8px;
 }
-.caixa-zapsign input {
+.caixa-busca input {
   flex: 1;
+  min-width: 200px;
+}
+.caixa-busca input.campo-telefone {
+  flex: 0 0 190px;
+  min-width: 0;
 }
 .etapas {
   display: flex;
@@ -675,37 +798,51 @@ select option {
   margin: 0;
 }
 .etapas li {
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
   font-weight: 500;
-  padding: 4px 10px;
+  line-height: 20px;
+  padding: 2px 11px;
   border-radius: 999px;
   border: 1px solid var(--linha);
-  color: var(--cinza-2);
+  color: var(--legenda);
 }
 .etapas li.feita {
-  border-color: rgba(179, 107, 255, 0.45);
-  color: var(--violeta);
+  border-color: var(--linha-forte);
+  background: var(--fundo-2);
+  color: var(--texto-cor);
+}
+/* visto de linha fina */
+.etapas li.feita::before {
+  content: '';
+  width: 4px;
+  height: 8px;
+  border: solid currentColor;
+  border-width: 0 1.6px 1.6px 0;
+  transform: translateY(-1px) rotate(45deg);
+  margin: 0 9px 0 1px;
 }
 .etapas li.atual {
   border-color: var(--roxo);
   background: var(--roxo);
-  color: var(--branco);
+  color: #ffffff;
+  font-weight: 600;
 }
 .etapas li.pendente {
-  border-color: rgba(216, 165, 255, 0.55);
-  color: var(--lilas);
+  border-color: var(--alerta-borda);
+  background: var(--alerta-fundo);
+  color: var(--alerta);
 }
 .chat {
-  background: var(--carvao);
+  background: var(--superficie);
   border: 1px solid var(--linha);
   border-radius: 18px;
   padding: 14px 18px;
   flex: 1;
   min-height: 200px;
   overflow-y: auto;
-  font-size: 13.5px;
+  font-size: 14px;
 }
 .msg {
   display: flex;
@@ -713,12 +850,13 @@ select option {
   padding: 4px 0;
 }
 .msg .hora {
-  color: var(--cinza-2);
+  color: var(--legenda);
   font-variant-numeric: tabular-nums;
+  min-width: 2.9em;
   flex-shrink: 0;
 }
 .msg-aviso {
-  color: var(--lilas);
+  color: var(--alerta);
 }
 .msg-erro {
   color: var(--erro);
@@ -730,21 +868,22 @@ select option {
   overflow-y: auto;
   position: relative;
   z-index: 1;
+  background: var(--fundo-2);
 }
 .tela-ajustes .conteudo {
   max-width: 900px;
   padding: 8px 0 32px;
 }
 .tela-ajustes section {
-  background: var(--carvao);
+  background: var(--superficie);
   border: 1px solid var(--linha);
   border-radius: 18px;
   padding: 20px 24px;
   margin: 16px 20px;
 }
 .detalhe-texto {
-  color: var(--cinza);
-  font-size: 13px;
+  color: var(--apoio);
+  font-size: 13.5px;
   margin-top: 10px;
 }
 .linha {
@@ -753,6 +892,10 @@ select option {
   align-items: center;
   flex-wrap: wrap;
   margin-top: 10px;
+}
+.linha input.campo-curto {
+  flex: 0 0 170px;
+  min-width: 0;
 }
 .linha label {
   display: flex;
@@ -764,6 +907,6 @@ select option {
   width: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--linha);
+  background: var(--linha-forte);
   border-radius: 5px;
 }

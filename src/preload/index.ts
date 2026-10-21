@@ -22,6 +22,7 @@ const api = {
     remover: (id: string) => ipcRenderer.invoke('jobs:remover', id),
     refazer: (id: string) => ipcRenderer.invoke('jobs:refazer', id),
     buscaZapsign: (id: string, busca: string) => ipcRenderer.invoke('jobs:buscaZapsign', id, busca),
+    dadosCliente: (id: string, dados: { nome?: string; telefone?: string }) => ipcRenderer.invoke('jobs:dadosCliente', id, dados),
     limparConcluidas: () => ipcRenderer.invoke('jobs:limparConcluidas'),
     abrirPasta: (caminho: string) => ipcRenderer.invoke('jobs:abrirPasta', caminho),
     onMudar: (cb: (jobs: unknown) => void) => ouvir('jobs', cb),
@@ -32,6 +33,10 @@ const api = {
     testarChave: () => ipcRenderer.invoke('ajustes:testarChave'),
     tokenZapsign: (token: string) => ipcRenderer.invoke('ajustes:tokenZapsign', token),
     testarZapsign: () => ipcRenderer.invoke('ajustes:testarZapsign'),
+    chaveWaha: (chave: string) => ipcRenderer.invoke('ajustes:chaveWaha', chave),
+    testarWaha: () => ipcRenderer.invoke('ajustes:testarWaha'),
+    contaServico: () => ipcRenderer.invoke('ajustes:contaServico'),
+    testarPlanilha: () => ipcRenderer.invoke('ajustes:testarPlanilha'),
     abrirLogs: () => ipcRenderer.invoke('ajustes:abrirLogs'),
   },
   atualizacao: {

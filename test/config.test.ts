@@ -47,6 +47,29 @@ describe('Config', () => {
     expect(cfg.chaveElevenLabs()).toBeNull();
   });
 
+  it('guarda a conta de serviço do Google no .env, em base64', () => {
+    const d = dir();
+    const cfg = new Config(d);
+    expect(cfg.contaServico()).toBeNull();
+    const json = join(d, 'conta.json');
+    writeFileSync(json, JSON.stringify({ type: 'service_account', client_email: 'robo@x.iam.gserviceaccount.com', private_key: 'k' }));
+    expect(cfg.definirContaServico(json)).toBe('robo@x.iam.gserviceaccount.com');
+    expect(readFileSync(join(d, '.env'), 'utf8')).toMatch(/^GOOGLE_SERVICE_ACCOUNT_JSON_BASE64=[A-Za-z0-9+/=]+$/m);
+    expect(new Config(d).contaServico()).toEqual({
+      email: 'robo@x.iam.gserviceaccount.com',
+      credenciais: { type: 'service_account', client_email: 'robo@x.iam.gserviceaccount.com', private_key: 'k' },
+    });
+    cfg.definirContaServico(null);
+    expect(cfg.contaServico()).toBeNull();
+  });
+
+  it('recusa JSON que não é de conta de serviço', () => {
+    const d = dir();
+    const json = join(d, 'outro.json');
+    writeFileSync(json, JSON.stringify({ type: 'authorized_user' }));
+    expect(() => new Config(d).definirContaServico(json)).toThrow('conta de serviço');
+  });
+
   it('um .env extra (projeto em desenvolvimento) serve de reserva', () => {
     const d = dir();
     const reserva = dir();

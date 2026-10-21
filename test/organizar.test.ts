@@ -117,6 +117,22 @@ describe('etapaClassificar', () => {
     expect(pedidos).toHaveLength(0);
   });
 
+  it('duas transcrições ficam as duas na Entrevista, numeradas em ordem de horário', () => {
+    const plano = planejarMovimentos(
+      [
+        { relativo: 'Transcricao - 19-10-2026 - 16h56 - G.txt', situacao: 'mover', tipo: 'Transcrição', tamanho: 1, modificadoEm: '' },
+        { relativo: 'Transcricao - 19-10-2026 - 16h45 - G.txt', situacao: 'mover', tipo: 'Transcrição', tamanho: 1, modificadoEm: '' },
+      ],
+      [],
+      {},
+      false,
+    );
+    expect(plano.movimentos.map((m) => [m.origem, m.destino])).toEqual([
+      ['Transcricao - 19-10-2026 - 16h56 - G.txt', 'Entrevista/Transcrição 2.txt'],
+      ['Transcricao - 19-10-2026 - 16h45 - G.txt', 'Entrevista/Transcrição.txt'],
+    ]);
+  });
+
   it('dois arquivos classificados com o mesmo tipo: o segundo vai para Revisar', () => {
     const plano = planejarMovimentos(
       [
@@ -193,14 +209,14 @@ describe('casos da revisão', () => {
   it('dois arquivos com o mesmo nome em pastas diferentes não colidem em Revisar', () => {
     const plano = planejarMovimentos(
       [
-        { relativo: 'WhatsApp/doc (1).pdf', situacao: 'classificar', tamanho: 1, modificadoEm: '' },
+        { relativo: 'Fotos/doc (1).pdf', situacao: 'classificar', tamanho: 1, modificadoEm: '' },
         { relativo: 'Scan/doc (1).pdf', situacao: 'classificar', tamanho: 1, modificadoEm: '' },
       ],
       [
         { id: 0, tipo: 'outro', grupo: null, ordem: 1 },
         { id: 1, tipo: 'outro', grupo: null, ordem: 1 },
       ],
-      { 0: 'WhatsApp/doc (1).pdf', 1: 'Scan/doc (1).pdf' },
+      { 0: 'Fotos/doc (1).pdf', 1: 'Scan/doc (1).pdf' },
       false,
     );
     const destinos = plano.movimentos.map((m) => m.destino);

@@ -1,24 +1,29 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import simbolo from './assets/simbolo.svg';
 import { api, type EstadoApp, type Job } from './api';
+import { Simbolo } from './Simbolo';
+import { BotaoTema } from './Tema';
 
 interface Props {
   estado: EstadoApp;
   aoAjustes: () => void;
   aoTrocarLogin: () => void;
+  aoMudar: () => Promise<unknown>;
 }
 
-const ETAPAS = ['inventario', 'zapsign', 'transcricao', 'perguntas', 'respostas', 'pdf-entrevista', 'classificar', 'mover', 'entregar-entrevista'];
+const ETAPAS = ['inventario', 'perguntas', 'zapsign', 'cliente', 'whatsapp', 'transcricao', 'respostas', 'pdf-entrevista', 'classificar', 'mover', 'entregar-entrevista', 'planilha'];
 const NOME_ETAPA: Record<string, string> = {
   inventario: 'Lendo a pasta',
+  perguntas: 'Lendo a entrevista',
   zapsign: 'Buscando no ZapSign',
+  cliente: 'Confirmando o cliente',
+  whatsapp: 'Buscando no WhatsApp',
   transcricao: 'Transcrevendo a ligação',
-  perguntas: 'Lendo as perguntas',
   respostas: 'Respondendo a entrevista',
   'pdf-entrevista': 'Gerando o PDF da entrevista',
   classificar: 'Identificando os documentos',
   mover: 'Arrumando as pastas',
   'entregar-entrevista': 'Salvando a entrevista',
+  planilha: 'Marcando na planilha',
 };
 const NOME_ESTADO: Record<Job['estado'], string> = {
   'na-fila': 'Na fila',
@@ -59,11 +64,13 @@ function quando(iso: string): string {
   return hoje ? `hoje às ${hora}` : `em ${d.toLocaleDateString('pt-BR')} às ${hora}`;
 }
 
-export function Principal({ estado, aoAjustes, aoTrocarLogin }: Props) {
+export function Principal({ estado, aoAjustes, aoTrocarLogin, aoMudar }: Props) {
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [verConcluidas, setVerConcluidas] = useState(true);
   const [buscaZapsign, setBuscaZapsign] = useState('');
+  const [nomeCliente, setNomeCliente] = useState('');
+  const [telefoneCliente, setTelefoneCliente] = useState('');
   const jobs = estado.jobs;
 
   const grupos = useMemo(
@@ -83,7 +90,11 @@ export function Principal({ estado, aoAjustes, aoTrocarLogin }: Props) {
     fimDoChat.current?.scrollIntoView({ block: 'end' });
   }, [job?.id, job?.mensagens.length]);
 
-  useEffect(() => setBuscaZapsign(job?.buscaZapsign ?? ''), [job?.id]);
+  useEffect(() => {
+    setBuscaZapsign(job?.buscaZapsign ?? '');
+    setNomeCliente(job?.cliente?.nome ?? '');
+    setTelefoneCliente(job?.cliente?.telefone ?? '');
+  }, [job?.id]);
 
   const tentar = async (acao: () => Promise<unknown>) => {
     setErro(null);
@@ -98,24 +109,33 @@ export function Principal({ estado, aoAjustes, aoTrocarLogin }: Props) {
   const prontosParaOrganizar = jobs.filter((j) => !ocupado(j) && j.estado !== 'concluido').length;
   const organizandoAgora = jobs.filter((j) => j.estado === 'rodando').length;
   const zapsignPendente = job !== null && !ocupado(job) && job.etapasPendentes.includes('zapsign');
+  const wahaPronto = Boolean(estado.ajustes.wahaUrl && estado.chaveWaha);
+  const planilhaPronta = Boolean(estado.contaServico && estado.ajustes.planilhaId);
+  // cliente não confirmado na planilha, ou conversa não achada com o telefone dela
+  const dadosPendentes =
+    job !== null && !ocupado(job) && planilhaPronta && (job.etapasPendentes.includes('cliente') || (wahaPronto && job.etapasPendentes.includes('whatsapp')));
+  const indicadores = [
+    { nome: 'ZapSign', ok: Boolean(estado.tokenZapsign), falta: 'Sem token do ZapSign: os assinados não serão puxados' },
+    { nome: 'WhatsApp', ok: wahaPronto, falta: 'Sem WAHA: os documentos do WhatsApp não serão puxados' },
+    { nome: 'Planilha', ok: planilhaPronta, falta: 'Sem planilha: o cliente não é confirmado nem marcado como Pasta pronta' },
+    { nome: 'ElevenLabs', ok: Boolean(estado.chaveElevenLabs), falta: 'Sem chave do ElevenLabs: a entrevista não é transcrita' },
+  ];
 
   return (
     <div className="tela-principal">
       <header className="barra">
         <div className="marca">
-          <img className="simbolo" src={simbolo} alt="" />
+          <Simbolo />
           <div>
-            <h1>Organizador de Pastas</h1>
+            <h1>Organizador de pastas</h1>
             <div className="marca-sub">
-              <span>Furtado · {estado.ajustes.provedor === 'claude' ? 'Claude' : 'ChatGPT'}</span>
-              <span title={estado.tokenZapsign ? 'Token do ZapSign configurado' : 'Sem token do ZapSign: os assinados não serão puxados'}>
-                <i className={`ponto ${estado.tokenZapsign ? 'ponto-ok' : 'ponto-falta'}`} />
-                ZapSign
-              </span>
-              <span title={estado.chaveElevenLabs ? 'Chave do ElevenLabs configurada' : 'Sem chave do ElevenLabs: a entrevista não é transcrita'}>
-                <i className={`ponto ${estado.chaveElevenLabs ? 'ponto-ok' : 'ponto-falta'}`} />
-                ElevenLabs
-              </span>
+              <span title="Inteligência artificial em uso">{estado.ajustes.provedor === 'claude' ? 'Claude' : 'ChatGPT'}</span>
+              {indicadores.map((i) => (
+                <span key={i.nome} title={i.ok ? `${i.nome} configurado` : i.falta}>
+                  <i className={`ponto ${i.ok ? 'ponto-ok' : 'ponto-falta'}`} />
+                  {i.nome}
+                </span>
+              ))}
             </div>
           </div>
         </div>
@@ -131,6 +151,7 @@ export function Principal({ estado, aoAjustes, aoTrocarLogin }: Props) {
           <button className="discreto" onClick={aoAjustes} title="Ajustes">
             Ajustes
           </button>
+          <BotaoTema aoMudar={aoMudar} />
         </div>
       </header>
       <div className="linha-grad" />
@@ -139,7 +160,7 @@ export function Principal({ estado, aoAjustes, aoTrocarLogin }: Props) {
 
       {jobs.length === 0 ? (
         <div className="vazio">
-          <img src={simbolo} alt="" />
+          <Simbolo />
           <h2>Nenhuma pasta ainda.</h2>
           <p>
             Clique em <b>Enviar pasta</b> e escolha a pasta de um ou mais clientes. Depois, <b>Organizar pasta</b>: até {estado.ajustes.paralelismo} pastas são
@@ -228,8 +249,21 @@ export function Principal({ estado, aoAjustes, aoTrocarLogin }: Props) {
                 <span className="caminho">{job.pasta}</span>
               </div>
               {job.motivo && <p className={`motivo motivo-${job.estado}`}>{job.motivo}</p>}
+              {dadosPendentes && (
+                <div className="caixa-busca">
+                  <span className="mini">Dados do cliente</span>
+                  <p className="sub">Nome e telefone como estão na planilha. O telefone é o do WhatsApp do cliente.</p>
+                  <div className="linha">
+                    <input placeholder={job.nome} value={nomeCliente} onChange={(e) => setNomeCliente(e.target.value)} />
+                    <input className="campo-telefone" placeholder="(DD) 99999-9999" value={telefoneCliente} onChange={(e) => setTelefoneCliente(e.target.value)} />
+                    <button className="primario" onClick={() => tentar(() => api.jobs.dadosCliente(job.id, { nome: nomeCliente, telefone: telefoneCliente }))}>
+                      Buscar de novo
+                    </button>
+                  </div>
+                </div>
+              )}
               {zapsignPendente && estado.tokenZapsign && (
-                <div className="caixa-zapsign">
+                <div className="caixa-busca">
                   <span className="mini">Buscar no ZapSign</span>
                   <p className="sub">Se o cliente está no ZapSign com outro nome, informe o nome como está lá, o e-mail dele ou o link do documento.</p>
                   <div className="linha">

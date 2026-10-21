@@ -12,6 +12,9 @@ export interface EstadoApp {
   versao: string;
   chaveElevenLabs: string | null;
   tokenZapsign: string | null;
+  chaveWaha: string | null;
+  /** E-mail da conta de serviço do Google (quem precisa ser Editor da planilha). */
+  contaServico: string | null;
   atualizacao: EstadoAtualizacao;
   arquivoEnv: string;
 }
@@ -33,6 +36,7 @@ export interface ApiTipada {
     remover: (id: string) => Promise<Job[]>;
     refazer: (id: string) => Promise<Job[]>;
     buscaZapsign: (id: string, busca: string) => Promise<Job[]>;
+    dadosCliente: (id: string, dados: { nome?: string; telefone?: string }) => Promise<Job[]>;
     limparConcluidas: () => Promise<Job[]>;
     abrirPasta: (caminho: string) => Promise<string>;
     onMudar: (cb: (jobs: Job[]) => void) => () => void;
@@ -43,6 +47,10 @@ export interface ApiTipada {
     testarChave: () => Promise<{ ok: boolean; mensagem: string }>;
     tokenZapsign: (token: string) => Promise<string | null>;
     testarZapsign: () => Promise<{ ok: boolean; mensagem: string }>;
+    chaveWaha: (chave: string) => Promise<string | null>;
+    testarWaha: () => Promise<{ ok: boolean; mensagem: string }>;
+    contaServico: () => Promise<string | null>;
+    testarPlanilha: () => Promise<{ ok: boolean; mensagem: string }>;
     abrirLogs: () => Promise<string>;
   };
   atualizacao: {

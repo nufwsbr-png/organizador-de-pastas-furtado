@@ -49,8 +49,8 @@ export function App() {
         </>
       )}
       {aviso && <div className="aviso-flutuante">{aviso}</div>}
-      {tela === 'login' && <Login aoEntrar={entrar} provedorAtual={estado.ajustes.provedor} />}
-      {tela === 'principal' && <Principal estado={estado} aoAjustes={() => setTela('ajustes')} aoTrocarLogin={() => setTela('login')} />}
+      {tela === 'login' && <Login aoEntrar={entrar} provedorAtual={estado.ajustes.provedor} aoMudar={recarregar} />}
+      {tela === 'principal' && <Principal estado={estado} aoAjustes={() => setTela('ajustes')} aoTrocarLogin={() => setTela('login')} aoMudar={recarregar} />}
       {tela === 'ajustes' && <Ajustes estado={estado} aoVoltar={() => setTela('principal')} aoMudar={recarregar} />}
     </>
   );

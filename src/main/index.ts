@@ -1,18 +1,23 @@
-import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, nativeTheme, shell } from 'electron';
 import { appendFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Atualizador, type EstadoAtualizacao } from './atualizador';
 import { Config, type Ajustes } from './config';
 import { etapaClassificar } from './etapas/classificar';
+import { etapaCliente } from './etapas/cliente';
 import { etapaEntregarEntrevista } from './etapas/entregar-entrevista';
 import { inventariar } from './etapas/inventario';
 import { etapaMover } from './etapas/mover';
 import { etapaPdfEntrevista } from './etapas/pdf-entrevista';
 import { etapaPerguntas } from './etapas/perguntas';
+import { etapaPlanilha } from './etapas/planilha';
 import { etapaRespostas } from './etapas/respostas';
 import { etapaTranscricao } from './etapas/transcricao';
+import { etapaWhatsapp } from './etapas/whatsapp';
 import { etapaZapsign } from './etapas/zapsign';
 import { transcreverElevenLabs } from './ferramentas/elevenlabs';
+import { apiGoogle, ClientePlanilha, idDaPlanilha } from './ferramentas/planilha';
+import { ClienteWaha } from './ferramentas/waha';
 import { ClienteZapsign } from './ferramentas/zapsign';
 import type { Job } from './fila';
 import { ErroPausa, type Etapa } from './job';
@@ -24,7 +29,8 @@ import { candidatosPadrao, localizarExecutavel } from './provedores/localizar';
 import { matarProcessos } from './provedores/processo';
 import type { IdProvedor, Provedor, StatusProvedor } from './provedores/tipos';
 
-if (process.env.ORGANIZADOR_DADOS) app.setPath('userData', process.env.ORGANIZADOR_DADOS);
+// a pasta de dados mantém o nome antigo do app: chaves, ajustes e pastas em andamento continuam onde estavam
+app.setPath('userData', process.env.ORGANIZADOR_DADOS ?? join(app.getPath('appData'), 'Organizador de Pastas Furtado'));
 const userData = app.getPath('userData');
 mkdirSync(userData, { recursive: true });
 const arquivoLog = join(userData, 'log.txt');
@@ -39,6 +45,22 @@ function log(texto: string): void {
 
 const config = new Config(userData, [join(app.getAppPath(), '.env'), join(process.cwd(), '.env')]);
 const zapsign = new ClienteZapsign({ token: () => config.tokenZapsign(), arquivoIndice: join(userData, 'zapsign-indice.json'), log });
+const waha = new ClienteWaha({ url: () => config.obter().wahaUrl || null, apiKey: () => config.chaveWaha(), sessao: () => config.obter().wahaSessao || 'furtado' });
+const wahaConfigurado = () => Boolean(config.obter().wahaUrl && config.chaveWaha());
+
+let planilhaAtual: { chave: string; cliente: ClientePlanilha } | null = null;
+/** Uma instância por configuração: a fila de gravação é compartilhada pelas pastas que terminam juntas. */
+function planilha(): ClientePlanilha | null {
+  const conta = config.contaServico();
+  const { planilhaId, planilhaAba } = config.obter();
+  if (!conta || !planilhaId.trim()) return null;
+  const aba = planilhaAba.trim() || 'Lançamentos';
+  const chave = `${conta.email}|${planilhaId}|${aba}`;
+  if (planilhaAtual?.chave !== chave) {
+    planilhaAtual = { chave, cliente: new ClientePlanilha(apiGoogle({ credenciais: conta.credenciais, planilhaId: idDaPlanilha(planilhaId), aba })) };
+  }
+  return planilhaAtual.cliente;
+}
 const pastaBin = join(userData, 'bin');
 const TIMEOUT_IA = 25 * 60_000;
 
@@ -78,14 +100,18 @@ function etapaInventario(): Etapa {
 function montarEtapas(): Etapa[] {
   return [
     etapaInventario(),
-    etapaZapsign(() => (config.tokenZapsign() ? zapsign : null)),
-    etapaTranscricao({ chave: () => config.chaveElevenLabs(), transcrever: (arquivo, chave) => transcreverElevenLabs(arquivo, chave) }),
+    // as perguntas vêm primeiro: o documento da entrevista dá o nome do cliente
     etapaPerguntas(provedorAtual),
+    etapaZapsign(() => (config.tokenZapsign() ? zapsign : null)),
+    etapaCliente({ planilha, zapsign: () => (config.tokenZapsign() ? zapsign : null) }),
+    etapaWhatsapp(() => (wahaConfigurado() ? waha : null)),
+    etapaTranscricao({ chave: () => config.chaveElevenLabs(), transcrever: (arquivo, chave) => transcreverElevenLabs(arquivo, chave) }),
     etapaRespostas(provedorAtual),
     etapaPdfEntrevista(),
     etapaClassificar(provedorAtual),
     etapaMover(),
     etapaEntregarEntrevista(),
+    etapaPlanilha(planilha),
   ];
 }
 
@@ -109,6 +135,14 @@ orquestrador.fila.aoMudar((jobs) => enviar('jobs', jobs));
 /** `--captura=<arquivo.png>`: renderiza a janela escondida, salva a imagem e fecha (usado só para conferir o visual). */
 const arquivoCaptura = process.argv.find((a) => a.startsWith('--captura='))?.slice('--captura='.length) ?? null;
 
+const TEMA_NATIVO = { sistema: 'system', claro: 'light', escuro: 'dark' } as const;
+const corDeFundo = () => (nativeTheme.shouldUseDarkColors ? '#0B0B0D' : '#FFFFFF');
+
+/** O tema nativo decide o prefers-color-scheme da tela e a cor da barra de título. */
+function aplicarTema(): void {
+  nativeTheme.themeSource = TEMA_NATIVO[config.obter().tema] ?? 'system';
+}
+
 function criarJanela(): void {
   janela = new BrowserWindow({
     width: 1180,
@@ -116,8 +150,8 @@ function criarJanela(): void {
     minWidth: 900,
     minHeight: 600,
     show: !arquivoCaptura,
-    title: 'Organizador de Pastas Furtado',
-    backgroundColor: '#0D0B12',
+    title: 'Organizador de pastas',
+    backgroundColor: corDeFundo(),
     autoHideMenuBar: true,
     webPreferences: { preload: join(import.meta.dirname, '../preload/index.mjs'), sandbox: false, contextIsolation: true },
   });
@@ -159,6 +193,8 @@ function estado() {
     versao: app.getVersion(),
     chaveElevenLabs: mascarar(config.chaveElevenLabs()),
     tokenZapsign: mascarar(config.tokenZapsign()),
+    chaveWaha: mascarar(config.chaveWaha()),
+    contaServico: config.contaServico()?.email ?? null,
     atualizacao: atualizador?.estado() ?? ({ estado: 'dev' } as EstadoAtualizacao),
     arquivoEnv: config.caminhoEnv(),
   };
@@ -207,13 +243,25 @@ function registrarIpc(): void {
     orquestrador.organizar(id).catch((erro) => log(`organizar falhou: ${erro}`));
     return orquestrador.jobs();
   });
+  ipcMain.handle('jobs:dadosCliente', (_e, id: string, dados: { nome?: string; telefone?: string }) => {
+    const cliente = { nome: dados.nome?.trim() || undefined, telefone: dados.telefone?.trim() || undefined };
+    orquestrador.fila.atualizar(id, { cliente: cliente.nome || cliente.telefone ? cliente : undefined });
+    // refaz a confirmação do cliente e o que depende dela
+    for (const saida of ['cliente.json', 'whatsapp.json', 'planilha.json']) rmSync(join(orquestrador.pastaJob(id), saida), { force: true });
+    orquestrador.organizar(id).catch((erro) => log(`organizar falhou: ${erro}`));
+    return orquestrador.jobs();
+  });
   ipcMain.handle('jobs:limparConcluidas', () => {
     orquestrador.limparConcluidas();
     return orquestrador.jobs();
   });
   ipcMain.handle('jobs:abrirPasta', (_e, caminho: string) => shell.openPath(caminho));
 
-  ipcMain.handle('ajustes:definir', (_e, mudancas: Partial<Ajustes>) => config.definir(mudancas));
+  ipcMain.handle('ajustes:definir', (_e, mudancas: Partial<Ajustes>) => {
+    const ajustes = config.definir(mudancas);
+    if (mudancas.tema) aplicarTema();
+    return ajustes;
+  });
   ipcMain.handle('ajustes:chave', (_e, chave: string) => {
     config.definirChaveElevenLabs(chave);
     return mascarar(config.chaveElevenLabs());
@@ -243,6 +291,36 @@ function registrarIpc(): void {
       return { ok: false, mensagem: erro instanceof Error ? erro.message : String(erro) };
     }
   });
+  ipcMain.handle('ajustes:chaveWaha', (_e, chave: string) => {
+    config.definirChaveWaha(chave);
+    return mascarar(config.chaveWaha());
+  });
+  ipcMain.handle('ajustes:testarWaha', async () => {
+    if (!wahaConfigurado()) return { ok: false, mensagem: 'Falta o endereço ou a chave do WAHA.' };
+    try {
+      return { ok: true, mensagem: await waha.testar() };
+    } catch (erro) {
+      return { ok: false, mensagem: erro instanceof Error ? erro.message : String(erro) };
+    }
+  });
+  ipcMain.handle('ajustes:contaServico', async () => {
+    const r = await dialog.showOpenDialog(janela!, {
+      title: 'Escolha o arquivo JSON da conta de serviço do Google',
+      properties: ['openFile'],
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    });
+    if (r.canceled || !r.filePaths[0]) return config.contaServico()?.email ?? null;
+    return config.definirContaServico(r.filePaths[0]);
+  });
+  ipcMain.handle('ajustes:testarPlanilha', async () => {
+    const p = planilha();
+    if (!p) return { ok: false, mensagem: 'Falta o arquivo da conta de serviço ou o link da planilha.' };
+    try {
+      return { ok: true, mensagem: await p.testar() };
+    } catch (erro) {
+      return { ok: false, mensagem: erro instanceof Error ? erro.message : String(erro) };
+    }
+  });
   ipcMain.handle('ajustes:abrirLogs', () => shell.openPath(userData));
 
   ipcMain.handle('atualizacao:buscar', () => atualizador?.buscar());
@@ -264,6 +342,8 @@ if (!app.requestSingleInstanceLock()) {
     log(`app ${app.getVersion()} iniciado`);
     atualizador = new Atualizador((e) => enviar('atualizacao', e), log);
     registrarIpc();
+    aplicarTema();
+    nativeTheme.on('updated', () => janela?.setBackgroundColor(corDeFundo()));
     criarJanela();
     if (!existsSync(join(userData, 'jobs'))) mkdirSync(join(userData, 'jobs'), { recursive: true });
     if (!arquivoCaptura) {

@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Etapa } from '../job';
+import { normalizar } from '../padrao';
 import { PROMPT_RESPOSTAS } from '../prompts';
 import type { Provedor } from '../provedores/tipos';
 import type { Pergunta } from './perguntas';
@@ -54,13 +55,24 @@ export const SCHEMA_RESPOSTAS = {
 
 export function formatarPerguntas(perguntas: Pergunta[]): string {
   return perguntas
-    .map((p) => `${String(p.numero).padStart(2, '0')}. [${p.secao}] ${p.pergunta}${p.simNao ? ' (Sim/Não)' : ''}`)
+    .map(
+      (p) =>
+        `${String(p.numero).padStart(2, '0')}. [${p.secao}] ${p.pergunta}${p.simNao ? ' (Sim/Não)' : ''}` +
+        (p.respostaNoPdf ? ` — já respondida no documento: "${p.respostaNoPdf}"` : ''),
+    )
     .join('\n');
 }
 
-/** Garante uma resposta por pergunta, na ordem; o que faltou vira "não respondida". */
+/**
+ * Garante uma resposta por pergunta, na ordem; o que faltou vira "não respondida".
+ * A resposta que já veio escrita no documento da entrevista é mantida como está.
+ */
 export function completarRespostas(perguntas: Pergunta[], vindas: Resposta[]): Resposta[] {
   return perguntas.map((p) => {
+    if (p.respostaNoPdf) {
+      const sn = normalizar(p.respostaNoPdf);
+      return { numero: p.numero, simNao: p.simNao && (sn === 'sim' || sn === 'nao') ? (sn === 'sim' ? 'Sim' : 'Não') : null, resposta: p.respostaNoPdf, naoRespondida: false };
+    }
     const r = vindas.find((x) => x.numero === p.numero);
     if (!r) return { numero: p.numero, simNao: null, resposta: '', naoRespondida: true };
     const texto = String(r.resposta ?? '').trim();
@@ -68,7 +80,8 @@ export function completarRespostas(perguntas: Pergunta[], vindas: Resposta[]): R
       numero: p.numero,
       simNao: p.simNao && (r.simNao === 'Sim' || r.simNao === 'Não') ? r.simNao : null,
       resposta: texto,
-      naoRespondida: Boolean(r.naoRespondida) || (texto === '' && r.simNao == null),
+      // se a IA escreveu uma resposta, ela vale, mesmo marcada como não respondida
+      naoRespondida: texto === '' && (Boolean(r.naoRespondida) || r.simNao == null),
     };
   });
 }

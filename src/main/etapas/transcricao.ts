@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, extname, join } from 'node:path';
 import type { Etapa } from '../job';
+import { normalizar, ordenarPorMomento } from '../padrao';
 import { lerDocumentoTexto } from '../ferramentas/texto';
 import type { Inventario } from './inventario';
 
@@ -14,13 +15,21 @@ export interface DepsTranscricao {
   transcrever: (arquivo: string, chave: string) => Promise<string>;
 }
 
-/** Acha uma transcrição pronta (txt, docx, pdf com "transcri" no nome) em qualquer pasta do cliente; devolve o caminho relativo. */
-export function acharTranscricaoManual(inventario: Inventario): string | null {
+/**
+ * Acha as transcrições prontas (txt, docx, pdf com "transcri" no nome) em qualquer pasta do cliente, em ordem de horário
+ * (a ligação que caiu e continuou em outra chamada vira duas). A mesma ligação em mais de um formato conta uma vez.
+ */
+export function acharTranscricoesManuais(inventario: Inventario): string[] {
   const candidatos = inventario.arquivos.filter((a) => a.situacao !== 'ignorar' && a.situacao !== 'classificar' && a.tipo === 'Transcrição');
   // prioridade: já na pasta Entrevista, depois txt (mais fiel), depois o resto
   const peso = (a: (typeof candidatos)[number]) => (a.situacao === 'no-lugar' ? 2 : 0) + (a.relativo.toLowerCase().endsWith('.txt') ? 1 : 0);
-  candidatos.sort((a, b) => peso(b) - peso(a));
-  return candidatos[0]?.relativo ?? null;
+  const porLigacao = new Map<string, (typeof candidatos)[number]>();
+  for (const a of candidatos) {
+    const chave = normalizar(basename(a.relativo, extname(a.relativo)));
+    const atual = porLigacao.get(chave);
+    if (!atual || peso(a) > peso(atual)) porLigacao.set(chave, a);
+  }
+  return ordenarPorMomento([...porLigacao.values()].map((a) => a.relativo));
 }
 
 export function etapaTranscricao(deps: DepsTranscricao): Etapa {
@@ -32,14 +41,22 @@ export function etapaTranscricao(deps: DepsTranscricao): Etapa {
       const pastaCliente = ctx.job.pasta;
       const destino = join(ctx.pastaJob, 'transcricao.txt');
 
-      const manual = acharTranscricaoManual(inventario);
-      if (manual && existsSync(join(pastaCliente, manual))) {
-        const texto = (await lerDocumentoTexto(join(pastaCliente, manual))).trim();
-        if (texto.length === 0) {
-          return { status: 'pendente', motivo: `A transcrição ${manual} está vazia ou não deu para ler o texto. Confira o arquivo e clique em Organizar de novo.` };
+      const manuais = acharTranscricoesManuais(inventario).filter((r) => existsSync(join(pastaCliente, r)));
+      if (manuais.length > 0) {
+        const partes: string[] = [];
+        for (const manual of manuais) {
+          const texto = (await lerDocumentoTexto(join(pastaCliente, manual))).trim();
+          if (texto.length === 0) {
+            return { status: 'pendente', motivo: `A transcrição ${manual} está vazia ou não deu para ler o texto. Confira o arquivo e clique em Organizar de novo.` };
+          }
+          partes.push(manuais.length > 1 ? `===== ${manual} =====\n\n${texto}` : texto);
         }
-        writeFileSync(destino, texto);
-        ctx.log(`Usando a transcrição que já estava na pasta (${manual}).`);
+        writeFileSync(destino, partes.join('\n\n'));
+        ctx.log(
+          manuais.length > 1
+            ? `Usando as ${manuais.length} transcrições que já estavam na pasta, em ordem de horário: ${manuais.join('; ')}.`
+            : `Usando a transcrição que já estava na pasta (${manuais[0]}).`,
+        );
         return { status: 'ok' };
       }
 

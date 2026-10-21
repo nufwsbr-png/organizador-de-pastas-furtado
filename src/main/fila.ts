@@ -25,6 +25,8 @@ export interface Job {
   motivo?: string;
   /** Nome, e-mail ou link do cliente no ZapSign, quando o nome da pasta não serve para achar o envelope. */
   buscaZapsign?: string;
+  /** Nome e telefone informados na tela quando o app não consegue confirmar o cliente sozinho. */
+  cliente?: { nome?: string; telefone?: string };
   criadoEm: string;
   atualizadoEm: string;
 }
