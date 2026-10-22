@@ -7,7 +7,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, 
 import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { auth as authGoogle, sheets as criarSheets } from '@googleapis/sheets';
-import { Config } from '../../src/main/config';
+import { Config, type Ajustes } from '../../src/main/config';
 import { etapaClassificar } from '../../src/main/etapas/classificar';
 import { etapaCliente } from '../../src/main/etapas/cliente';
 import { etapaEntregarEntrevista } from '../../src/main/etapas/entregar-entrevista';
@@ -21,6 +21,8 @@ import { etapaTranscricao } from '../../src/main/etapas/transcricao';
 import { etapaWhatsapp } from '../../src/main/etapas/whatsapp';
 import { etapaZapsign } from '../../src/main/etapas/zapsign';
 import { transcreverElevenLabs } from '../../src/main/ferramentas/elevenlabs';
+import { transcreverOpenRouter } from '../../src/main/ferramentas/openrouter';
+import { etapaEmpresa } from '../../src/main/etapas/empresa';
 import { apiGoogle, ClientePlanilha, idDaPlanilha } from '../../src/main/ferramentas/planilha';
 import { ClienteWaha } from '../../src/main/ferramentas/waha';
 import { ClienteZapsign } from '../../src/main/ferramentas/zapsign';
@@ -48,7 +50,9 @@ const listar = (dir: string, prefixo = ''): string[] =>
 /** Roda as etapas do app (mesma ordem de src/main/index.ts) na pasta `cliente`, com a planilha numa cópia temporária da aba. */
 async function processoReal(cliente: string, base: string, nomeNaPlanilha: string): Promise<Job> {
   const config = new Config(join(base, 'userData'), [join(process.cwd(), '.env')]);
-  const ajustes = JSON.parse(readFileSync(AJUSTES, 'utf8')) as { planilhaId: string; planilhaAba?: string; wahaUrl?: string; wahaSessao?: string };
+  const ajustes = JSON.parse(readFileSync(AJUSTES, 'utf8')) as Partial<Ajustes> & { planilhaId: string };
+  // transcrição como nos Ajustes do app; sem a escolha gravada, OpenRouter quando não há chave do ElevenLabs
+  const porOpenRouter = (ajustes.transcricao ?? (config.chaveElevenLabs() ? 'elevenlabs' : 'openrouter')) === 'openrouter';
   const conta = config.contaServico();
   expect(conta).toBeTruthy();
   expect(ajustes.wahaUrl).toBeTruthy();
@@ -91,11 +95,15 @@ async function processoReal(cliente: string, base: string, nomeNaPlanilha: strin
       etapaZapsign(() => zapsign),
       etapaCliente({ planilha: () => planilha, zapsign: () => zapsign }),
       etapaWhatsapp(() => waha),
-      etapaTranscricao({ chave: () => config.chaveElevenLabs(), transcrever: (a, k) => transcreverElevenLabs(a, k) }),
-      etapaRespostas(provedor),
-      etapaPdfEntrevista(),
+      etapaTranscricao({
+        chave: () => (porOpenRouter ? config.chaveOpenRouter() : config.chaveElevenLabs()),
+        transcrever: (a, k) => (porOpenRouter ? transcreverOpenRouter(a, k, { modelo: ajustes.modeloOpenRouter }) : transcreverElevenLabs(a, k)),
+      }),
       etapaClassificar(provedor),
       etapaMover(),
+      etapaEmpresa(provedor),
+      etapaRespostas(provedor),
+      etapaPdfEntrevista(),
       etapaEntregarEntrevista(),
       etapaPlanilha(() => planilha),
     ];

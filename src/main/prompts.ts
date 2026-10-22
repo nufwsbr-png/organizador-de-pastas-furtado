@@ -10,7 +10,7 @@ ${imagens.map((i, n) => `${n + 1}. ${i}`).join('\n')}
 
 Leia TODAS as imagens com atenção e extraia:
 1. A lista completa de perguntas, na ordem, com a seção a que pertence, se a pergunta tem os botões "Sim / Não" (simNao = true) ou só o campo de texto (simNao = false) e, em respostaNoPdf, a resposta que já está escrita no documento (o texto depois de "R:"), copiada como está. Deixe respostaNoPdf vazio quando não houver resposta escrita ou ela for só um ponto ou um traço.
-2. Os dados do cliente que aparecem no documento (no painel "Cliente em entrevista" ou no cabeçalho): nome, telefone, empresa, cargo, vínculo e salário, quando existirem.
+2. Os dados do cliente que aparecem no documento (no painel "Cliente em entrevista" ou no cabeçalho): nome, telefone, empresa, CNPJ e endereço da empresa, cargo, vínculo, salário e datas de admissão e de demissão, quando existirem.
 
 Regras:
 - Copie o texto de cada pergunta exatamente como está, sem resumir.
@@ -48,6 +48,59 @@ ${perguntas}
 
 TRANSCRIÇÃO DA LIGAÇÃO:
 ${transcricao}`;
+
+export interface EntradaEmpresa {
+  hoje: string;
+  documento: string;
+  transcricao: string;
+  conversa: string;
+  ctpsTexto: string;
+  ctpsImagens: string[];
+}
+
+export const PROMPT_EMPRESA = (e: EntradaEmpresa) => `Você é assistente de um escritório de advocacia trabalhista. Identifique, com certeza, a empresa contra a qual o cliente vai entrar com o processo e se o caso tem empresa tomadora de serviços (trabalho terceirizado). Hoje é ${e.hoje}.
+
+QUAL É A EMPRESA DO CASO. Use as fontes nesta ordem:
+1. O documento da entrevista (dados já preenchidos no cadastro).
+2. A ligação da entrevista (transcrição): a empresa que a atendente analisou com o cliente.
+3. A conversa do WhatsApp com o escritório.
+A CTPS (carteira de trabalho) confirma o nome exato (razão social), o CNPJ, o cargo e as datas de admissão e saída.
+
+RÉGUA DO ESCRITÓRIO: a empresa só serve para o caso se o cliente saiu dela há MENOS de 2 anos (ou ainda trabalha lá) E trabalhou nela MAIS de 6 meses.
+
+Cuidados obrigatórios:
+- O cliente às vezes cita no WhatsApp uma empresa que não se encaixa na régua (saiu há mais de 2 anos, ficou 6 meses ou menos) e o escritório passa a analisar outra. Nunca escolha uma empresa só porque foi citada: confira a régua com as datas.
+- Confira na CTPS: a empresa do caso deve aparecer num contrato com datas compatíveis com o que o cliente contou. Use o nome como está na CTPS.
+- Se mais de uma empresa se encaixa na régua e as fontes não dizem qual é a do caso, não escolha por conta própria: preencha a mais provável e marque certeza = false.
+- certeza = true só quando as fontes apontam para a mesma empresa e ela se encaixa na régua.
+- confirmadaNaCtps = true só se você viu essa empresa num contrato da CTPS.
+- Não invente nome, CNPJ, endereço nem datas: copie do que está escrito nas fontes; o que não houver, null. Datas no formato DD/MM/AAAA.
+- Em fontes, marque onde cada empresa aparece: "entrevista", "ligacao", "whatsapp", "ctps".
+- Em descartadas, liste as empresas citadas que você descartou e o motivo em poucas palavras (ex.: "saiu em 2021, mais de 2 anos").
+
+TERCEIRIZAÇÃO:
+- terceirizado = true quando o cliente era empregado de uma empresa (a empregadora, que presta serviços) e trabalhava dentro de outra empresa ou para outra (a tomadora). Exemplos: vigilância, limpeza, portaria, manutenção, call center, terceirizado de banco, loja, fábrica ou hospital; o cliente diz que "prestava serviço para", "trabalhava dentro da" ou "era terceirizado"; o local de trabalho é de outra empresa. Só marque com indício claro nas fontes.
+- Em tomadora, os dados da empresa tomadora que aparecem nas fontes (nome, CNPJ, endereço); o que não houver, null. Sem terceirização, tomadora com tudo null e fontes vazia.
+
+Em justificativa, escreva de 1 a 3 frases curtas: qual é a empresa do caso e por quê e, se for o caso, por que é terceirizado.
+
+Responda SOMENTE no formato JSON pedido.
+
+DOCUMENTO DA ENTREVISTA:
+${e.documento}
+
+TRANSCRIÇÃO DA LIGAÇÃO:
+${e.transcricao || '(sem transcrição)'}
+
+CONVERSA DO WHATSAPP:
+${e.conversa || '(conversa não disponível)'}
+
+CTPS:
+${
+  e.ctpsImagens.length > 0
+    ? `As páginas da CTPS estão nestas imagens, em ordem:\n${e.ctpsImagens.map((i, n) => `${n + 1}. ${i}`).join('\n')}`
+    : e.ctpsTexto || '(a CTPS não está na pasta)'
+}`;
 
 export const PROMPT_CLASSIFICAR = (itens: string) => `Você organiza a pasta de um cliente de um escritório de advocacia trabalhista. Cada arquivo abaixo precisa ser classificado em um destes tipos:
 

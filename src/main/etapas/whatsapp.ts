@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { extname, join } from 'node:path';
 import type { Etapa } from '../job';
 import { formatarTelefone } from '../ferramentas/nomes';
-import type { ArquivoWhatsapp, FonteWhatsapp } from '../ferramentas/waha';
+import type { ArquivoWhatsapp, FonteWhatsapp, MensagemTexto } from '../ferramentas/waha';
 import { ehImagem, ehPdf } from '../padrao';
 import { lerCliente } from './cliente';
 import { inventariar, type Inventario } from './inventario';
@@ -55,6 +55,15 @@ export function nomeDoArquivo(a: ArquivoWhatsapp): string {
 
 const sha256 = (b: Buffer) => createHash('sha256').update(b).digest('hex');
 
+/** Conversa em texto, guardada na pasta do job (não na do cliente): é dela que sai a empresa quando a entrevista não traz. */
+export const ARQUIVO_CONVERSA = 'whatsapp-conversa.txt';
+
+/** "[06/10/2026 14:10] Cliente: texto", uma linha por mensagem, no horário de Brasília. */
+export function conversaParaTexto(mensagens: MensagemTexto[]): string {
+  const formato = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  return mensagens.map((m) => `[${formato.format(new Date(m.quando * 1000)).replace(',', '')}] ${m.doEscritorio ? 'Escritório' : 'Cliente'}: ${m.texto.replace(/\s*\n\s*/g, ' / ')}`).join('\n');
+}
+
 /** Hash de todos os documentos e imagens que já estão na pasta (inclusive em _substituidos), para não baixar de novo. */
 function hashesDaPasta(pasta: string): Set<string> {
   const hashes = new Set<string>();
@@ -70,8 +79,9 @@ function hashesDaPasta(pasta: string): Set<string> {
 }
 
 /**
- * Acha a conversa do cliente no WhatsApp do escritório (pelo telefone confirmado na planilha) e baixa
- * todas as imagens e documentos que ele mandou para a pasta WhatsApp/. A classificação decide o que é cada um.
+ * Acha a conversa do cliente no WhatsApp do escritório (pelo telefone confirmado na planilha), guarda o texto dela
+ * (para confirmar a empresa) e baixa todas as imagens e documentos que ele mandou para a pasta WhatsApp/.
+ * A classificação decide o que é cada um. Com os documentos já na pasta, só o texto é lido.
  */
 export function etapaWhatsapp(fonte: () => FonteWhatsapp | null): Etapa {
   return {
@@ -82,21 +92,38 @@ export function etapaWhatsapp(fonte: () => FonteWhatsapp | null): Etapa {
       const arquivoInventario = join(ctx.pastaJob, 'inventario.json');
       const inventario = JSON.parse(readFileSync(arquivoInventario, 'utf8')) as Inventario;
       const faltam = faltamDoWhatsapp(inventario);
-      if (faltam.length === 0) return { status: 'pulada', motivo: 'RG ou CNH, CTPS e comprovante já estão na pasta; não precisei do WhatsApp.' };
+      const temTudo = faltam.length === 0;
 
       const w = fonte();
-      if (!w) return { status: 'pendente', motivo: MENSAGEM_SEM_WAHA };
+      if (!w) {
+        return temTudo
+          ? { status: 'pulada', motivo: 'RG ou CNH, CTPS e comprovante já estão na pasta; WhatsApp não configurado, então a empresa não é procurada na conversa.' }
+          : { status: 'pendente', motivo: MENSAGEM_SEM_WAHA };
+      }
       const cliente = lerCliente(ctx.pastaJob);
       if (!cliente) return { status: 'pendente', motivo: 'O cliente ainda não foi confirmado na planilha.' };
       const tel = formatarTelefone(cliente.telefone);
-      ctx.log(`Procurando a conversa com ${tel} no WhatsApp (falta ${faltam.join(', ')})…`);
+      ctx.log(`Procurando a conversa com ${tel} no WhatsApp${temTudo ? ' (os documentos já estão na pasta: só leio a conversa)' : ` (falta ${faltam.join(', ')})`}…`);
 
       const salvos: { relativo: string; id: string; quando: string }[] = [];
       let repetidos = 0;
       try {
         const conversa = await w.acharConversa(cliente.telefone);
         if (!conversa) {
+          if (temTudo) return { status: 'pulada', motivo: `Não achei conversa com ${tel} no WhatsApp do escritório; os documentos já estavam na pasta.` };
           return { status: 'pendente', motivo: `Não achei conversa com ${tel} no WhatsApp do escritório. Confira o telefone na planilha ou informe outro abaixo.` };
+        }
+
+        try {
+          const texto = await w.conversaEmTexto(conversa);
+          writeFileSync(join(ctx.pastaJob, ARQUIVO_CONVERSA), conversaParaTexto(texto));
+          ctx.log(`WhatsApp: guardei o texto da conversa (${texto.length} mensagem(ns)) para confirmar a empresa.`);
+        } catch (erro) {
+          ctx.log(`WhatsApp: não consegui ler o texto da conversa (${erro instanceof Error ? erro.message : String(erro)}).`, 'aviso');
+        }
+        if (temTudo) {
+          writeFileSync(join(ctx.pastaJob, 'whatsapp.json'), JSON.stringify({ conversa, salvos, soTexto: true, quando: new Date().toISOString() }, null, 2));
+          return { status: 'ok' };
         }
         const hashes = hashesDaPasta(ctx.job.pasta);
         const resumo = await w.midiasDoCliente(conversa, async (a) => {

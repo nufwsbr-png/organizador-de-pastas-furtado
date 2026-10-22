@@ -1,8 +1,9 @@
-import { writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Etapa } from '../job';
 import type { FontePlanilha } from '../ferramentas/planilha';
 import { lerCliente, MENSAGEM_SEM_PLANILHA } from './cliente';
+import type { AnaliseEmpresa } from './empresa';
 import { inventariar } from './inventario';
 
 /** O que precisa estar na pasta, no lugar, para ela contar como pronta. */
@@ -25,6 +26,7 @@ const NOME_ETAPA: Record<string, string> = {
   'pdf-entrevista': 'PDF da entrevista',
   classificar: 'identificação dos documentos',
   mover: 'arrumação das pastas',
+  empresa: 'confirmação da empresa',
   'entregar-entrevista': 'entrevista na pasta',
 };
 
@@ -35,6 +37,13 @@ export function faltandoNaPasta(pasta: string): string[] {
 
 function hojeDDMM(): string {
   return new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit' });
+}
+
+/** "DD/MM Robô: pasta organizada pelo app", e o que a equipe ainda precisa pedir sobre a empresa (ex.: dados da tomadora). */
+export function anotacao(pastaJob: string): string {
+  const arquivo = join(pastaJob, 'empresa.json');
+  const pendencias = existsSync(arquivo) ? (JSON.parse(readFileSync(arquivo, 'utf8')) as AnaliseEmpresa).pendencias : [];
+  return `${hojeDDMM()} Robô: pasta organizada pelo app${pendencias.length > 0 ? `. Pendente: ${pendencias.map((p) => p.curta).join('; ')}` : ''}`;
 }
 
 /**
@@ -59,7 +68,7 @@ export function etapaPlanilha(fonte: () => FontePlanilha | null): Etapa {
       if (!cliente) return { status: 'pendente', motivo: 'O cliente ainda não foi confirmado na planilha.' };
 
       try {
-        const r = await p.marcarPastaPronta({ nome: cliente.nome, telefone: cliente.telefone }, `${hojeDDMM()} Robô: pasta organizada pelo app`);
+        const r = await p.marcarPastaPronta({ nome: cliente.nome, telefone: cliente.telefone }, anotacao(ctx.pastaJob));
         if (r.status === 'nao') {
           return { status: 'pendente', motivo: `Na planilha, a Pasta pronta de ${cliente.nome} (linha ${r.linha}) está como "Não", uma decisão da equipe. Não mudei.` };
         }

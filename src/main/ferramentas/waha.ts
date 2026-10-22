@@ -35,17 +35,30 @@ export interface ResumoConversa {
   falhas: FalhaWhatsapp[];
 }
 
+/** Mensagem da conversa em texto (as duas pontas), para a IA achar a empresa do cliente. */
+export interface MensagemTexto {
+  /** Segundos Unix. */
+  quando: number;
+  /** true = mandada pelo escritório. */
+  doEscritorio: boolean;
+  /** Texto da mensagem; arquivo vira "[arquivo]" (com a legenda, se tiver). */
+  texto: string;
+}
+
 /** O que a etapa do WhatsApp usa (o WAHA real ou um falso nos testes). */
 export interface FonteWhatsapp {
   acharConversa(telefone: string): Promise<ConversaWhatsapp | null>;
   /** Percorre a conversa inteira e entrega cada imagem ou documento que o cliente mandou. */
   midiasDoCliente(conversa: ConversaWhatsapp, aoArquivo: (a: ArquivoWhatsapp) => Promise<void>): Promise<ResumoConversa>;
+  /** A conversa inteira em texto, do cliente e do escritório, em ordem de envio. */
+  conversaEmTexto(conversa: ConversaWhatsapp): Promise<MensagemTexto[]>;
 }
 
 interface MensagemApi {
   id: string;
   timestamp: number;
   fromMe?: boolean;
+  body?: string | null;
   hasMedia?: boolean;
   media?: { url?: string | null; mimetype?: string | null; filename?: string | null; error?: unknown } | null;
 }
@@ -148,6 +161,24 @@ export class ClienteWaha implements FonteWhatsapp {
       }
     }
     return resumo;
+  }
+
+  async conversaEmTexto(conversa: ConversaWhatsapp): Promise<MensagemTexto[]> {
+    const sessao = encodeURIComponent(this.opcoes.sessao());
+    const porId = new Map<string, MensagemTexto>();
+    for (const chatId of conversa.ids) {
+      const caminho = `/api/${sessao}/chats/${encodeURIComponent(chatId)}/messages`;
+      for (let pagina = 0; pagina < 400; pagina++) {
+        const mensagens = await this.chamar<MensagemApi[]>(caminho, { limit: this.porPagina, offset: pagina * this.porPagina, downloadMedia: false });
+        for (const m of mensagens) {
+          const corpo = (m.body ?? '').trim();
+          const texto = m.hasMedia ? `[arquivo]${corpo ? ` ${corpo}` : ''}` : corpo;
+          if (texto && !porId.has(m.id)) porId.set(m.id, { quando: m.timestamp, doEscritorio: Boolean(m.fromMe), texto });
+        }
+        if (mensagens.length < this.porPagina) break;
+      }
+    }
+    return [...porId.values()].sort((a, b) => a.quando - b.quando);
   }
 
   /** Baixa a mídia de uma mensagem (de novo, pela mensagem, se o arquivo já tiver expirado no WAHA). */

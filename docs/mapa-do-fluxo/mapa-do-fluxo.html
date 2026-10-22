@@ -55,6 +55,10 @@
   /* página 2: etapa por etapa */
   .p2 { padding-top: 13mm; }
   .p2 .topo { padding-bottom: 6mm; margin-bottom: 7mm; }
+  .p2 .grade { grid-template-columns: repeat(5, 1fr); gap: 3.6mm 4.6mm; }
+  .p2 .card { padding: 3mm 3.6mm; }
+  .p2 .card p { font-size: 7.5pt; line-height: 1.38; }
+  .p2 .card .nota { font-size: 7pt; }
   .grade { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; gap: 4.5mm 6mm; }
   .card { border: .25mm solid var(--linha); border-radius: 2.4mm; padding: 3.4mm 4.2mm; display: flex; flex-direction: column; }
   .card .cab { display: flex; justify-content: space-between; align-items: baseline; }
@@ -139,35 +143,36 @@
     <div class="fase">
       <span class="rotulo">Fase 1</span>
       <h2>Reunir</h2>
-      <p class="desc">Descobre quem é o cliente e junta o que falta: assinados do ZapSign e documentos do WhatsApp.</p>
+      <p class="desc">Descobre quem é o cliente e junta o que falta: assinados do ZapSign, documentos e conversa do WhatsApp e a transcrição.</p>
       <ol>
         <li><span class="n">01</span>Lendo a pasta</li>
         <li><span class="n">02</span>Lendo a entrevista</li>
         <li><span class="n">03</span>Buscando no ZapSign</li>
         <li><span class="n">04</span>Confirmando o cliente</li>
         <li><span class="n">05</span>Buscando no WhatsApp</li>
+        <li><span class="n">06</span>Transcrevendo a ligação</li>
       </ol>
     </div>
     <div class="seta"><svg viewBox="0 0 10 20"><polyline points="2,2 8,10 2,18" fill="none" stroke="#5C5866" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div class="fase">
       <span class="rotulo">Fase 2</span>
-      <h2>Entrevista</h2>
-      <p class="desc">Transforma a ligação na entrevista preenchida, em PDF.</p>
+      <h2>Organizar</h2>
+      <p class="desc">Identifica cada documento e arruma tudo no padrão do escritório.</p>
       <ol>
-        <li><span class="n">06</span>Transcrevendo a ligação</li>
-        <li><span class="n">07</span>Respondendo a entrevista</li>
-        <li><span class="n">08</span>Gerando o PDF da entrevista</li>
+        <li><span class="n">07</span>Identificando os documentos</li>
+        <li><span class="n">08</span>Arrumando as pastas</li>
       </ol>
     </div>
     <div class="seta"><svg viewBox="0 0 10 20"><polyline points="2,2 8,10 2,18" fill="none" stroke="#5C5866" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div class="fase">
       <span class="rotulo">Fase 3</span>
-      <h2>Organizar</h2>
-      <p class="desc">Identifica cada documento e arruma tudo no padrão do escritório.</p>
+      <h2>Entrevista</h2>
+      <p class="desc">Confirma a empresa do processo na CTPS e transforma a ligação na entrevista preenchida, em PDF.</p>
       <ol>
-        <li><span class="n">09</span>Identificando os documentos</li>
-        <li><span class="n">10</span>Arrumando as pastas</li>
-        <li><span class="n">11</span>Salvando a entrevista</li>
+        <li><span class="n">09</span>Confirmando a empresa</li>
+        <li><span class="n">10</span>Respondendo a entrevista</li>
+        <li><span class="n">11</span>Gerando o PDF da entrevista</li>
+        <li><span class="n">12</span>Salvando a entrevista</li>
       </ol>
     </div>
     <div class="seta"><svg viewBox="0 0 10 20"><polyline points="2,2 8,10 2,18" fill="none" stroke="#5C5866" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -176,7 +181,7 @@
       <h2>Fechar</h2>
       <p class="desc">Com a pasta completa, marca "Pasta pronta" na planilha.</p>
       <ol>
-        <li><span class="n">12</span>Marcando na planilha</li>
+        <li><span class="n">13</span>Marcando na planilha</li>
       </ol>
     </div>
   </div>
@@ -196,7 +201,7 @@
     </div>
   </div>
 
-  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 21/10/2026</span><span>1 / 7</span></div>
+  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 22/10/2026</span><span>1 / 7</span></div>
 </section>
 
 <!-- ======================= PÁGINA 2 · etapa por etapa ======================= -->
@@ -218,7 +223,7 @@
     <div class="card">
       <div class="cab"><span class="n">02</span><span class="fonte">IA</span></div>
       <h3>Lendo a entrevista</h3>
-      <p>Acha o PDF da entrevista (pelo nome ou pelo conteúdo) e lê as perguntas e os dados do cliente, com o telefone.</p>
+      <p>Acha o PDF da entrevista (pelo nome ou pelo conteúdo) e lê as perguntas e os dados do cliente e da empresa.</p>
       <div class="notas-card"><p class="nota"><span>Para</span> se não achar o PDF das perguntas.</p></div>
     </div>
     <div class="card">
@@ -236,49 +241,55 @@
     <div class="card">
       <div class="cab"><span class="n">05</span><span class="fonte">WhatsApp</span></div>
       <h3>Buscando no WhatsApp</h3>
-      <p>Baixa as fotos e documentos que o cliente mandou (sem figurinha, áudio e vídeo).</p>
-      <div class="notas-card"><p class="nota"><span>Pula</span> se já tem RG ou CNH, CTPS e comprovante.</p><p class="nota"><span>Para</span> se não achar a conversa.</p></div>
+      <p>Baixa as fotos e documentos que o cliente mandou e guarda o texto da conversa.</p>
+      <div class="notas-card"><p class="nota"><span>Pula</span> o download se já tem RG ou CNH, CTPS e comprovante.</p><p class="nota"><span>Para</span> se não achar a conversa.</p></div>
     </div>
     <div class="card">
       <div class="cab"><span class="n">06</span><span class="fonte">ElevenLabs ou OpenRouter</span></div>
       <h3>Transcrevendo a ligação</h3>
-      <p>Usa as transcrições que vieram na pasta (todas, em ordem de horário) ou transcreve o áudio.</p>
-      <div class="notas-card"><p class="nota"><span>Para</span> sem transcrição e sem a chave. O resto da pasta segue.</p></div>
+      <p>Usa as transcrições que vieram na pasta (em ordem de horário) ou transcreve o áudio.</p>
+      <div class="notas-card"><p class="nota"><span>Para</span> sem transcrição e sem a chave.</p></div>
     </div>
     <div class="card">
       <div class="cab"><span class="n">07</span><span class="fonte">IA</span></div>
-      <h3>Respondendo a entrevista</h3>
-      <p>Responde cada pergunta com o que foi dito na ligação. O que foi perguntado fora do roteiro entra em "Outras perguntas feitas".</p>
-    </div>
-    <div class="card">
-      <div class="cab"><span class="n">08</span><span class="fonte">App</span></div>
-      <h3>Gerando o PDF da entrevista</h3>
-      <p>Monta a Entrevista preenchida em PDF, com a transcrição anexada no fim.</p>
-    </div>
-    <div class="card">
-      <div class="cab"><span class="n">09</span><span class="fonte">IA</span></div>
       <h3>Identificando os documentos</h3>
       <p>Diz o que é cada arquivo: RG, CNH, CTPS, comprovante, contrato… Frente e verso viram um documento só.</p>
     </div>
     <div class="card">
-      <div class="cab"><span class="n">10</span><span class="fonte">App</span></div>
+      <div class="cab"><span class="n">08</span><span class="fonte">App</span></div>
       <h3>Arrumando as pastas</h3>
       <p>Junta as fotos de cada documento num PDF e põe tudo no padrão. O que veio do WhatsApp e não serviu vai para Não juntar.</p>
     </div>
     <div class="card">
+      <div class="cab"><span class="n">09</span><span class="fonte">IA</span></div>
+      <h3>Confirmando a empresa</h3>
+      <p>Cruza entrevista, ligação, WhatsApp e CTPS (saída há menos de 2 anos, mais de 6 meses de trabalho) e vê se é terceirizado.</p>
+      <div class="notas-card"><p class="nota"><span>Avisa</span> o que falta pedir (ex.: dados da tomadora).</p></div>
+    </div>
+    <div class="card">
+      <div class="cab"><span class="n">10</span><span class="fonte">IA</span></div>
+      <h3>Respondendo a entrevista</h3>
+      <p>Responde cada pergunta com o que foi dito na ligação; o que ficou fora do roteiro vai para "Outras perguntas feitas".</p>
+    </div>
+    <div class="card">
       <div class="cab"><span class="n">11</span><span class="fonte">App</span></div>
+      <h3>Gerando o PDF da entrevista</h3>
+      <p>Monta a Entrevista preenchida em PDF, com a empresa, as pendências e a transcrição.</p>
+    </div>
+    <div class="card">
+      <div class="cab"><span class="n">12</span><span class="fonte">App</span></div>
       <h3>Salvando a entrevista</h3>
       <p>Coloca a Entrevista preenchida.pdf na pasta Entrevista.</p>
     </div>
     <div class="card">
-      <div class="cab"><span class="n">12</span><span class="fonte">Planilha</span></div>
+      <div class="cab"><span class="n">13</span><span class="fonte">Planilha</span></div>
       <h3>Marcando na planilha</h3>
-      <p>Com a pasta completa, marca Pasta pronta = Sim, pinta de verde e anota em Observações.</p>
-      <div class="notas-card"><p class="nota"><span>Para</span> se faltar algum documento.</p><p class="nota">"Não" na planilha não é trocado.</p></div>
+      <p>Com a pasta completa, marca Pasta pronta = Sim e anota em Observações, com as pendências.</p>
+      <div class="notas-card"><p class="nota"><span>Para</span> se faltar documento. "Não" não é trocado.</p></div>
     </div>
   </div>
 
-  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 21/10/2026</span><span>2 / 7</span></div>
+  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 22/10/2026</span><span>2 / 7</span></div>
 </section>
 
 <!-- ======================= PÁGINA 3 · a pasta no fim ======================= -->
@@ -333,7 +344,7 @@
     </div>
   </div>
 
-  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 21/10/2026</span><span>3 / 7</span></div>
+  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 22/10/2026</span><span>3 / 7</span></div>
 </section>
 
 <!-- ======================= PÁGINA 4 · quando o app para ======================= -->
@@ -369,7 +380,7 @@
     </div>
   </div>
 
-  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 21/10/2026</span><span>4 / 7</span></div>
+  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 22/10/2026</span><span>4 / 7</span></div>
 </section>
 
 <!-- ======================= PÁGINA 5 · por dentro ======================= -->
@@ -424,7 +435,7 @@
     </div>
   </div>
 
-  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 21/10/2026</span><span>5 / 7</span></div>
+  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 22/10/2026</span><span>5 / 7</span></div>
 </section>
 
 <!-- ======================= PÁGINA 6 · trajeto 01 a 06 ======================= -->
@@ -453,22 +464,22 @@
         <td><p><code>spreadsheets.values.get</code> lê a aba Lançamentos; as colunas são achadas pelo nome do cabeçalho.</p><p>Compara o telefone da linha com o do signatário no ZapSign ou o do documento da entrevista (8 últimos dígitos).</p></td>
         <td><code>cliente.json</code> (nome, telefone, linha)</td></tr>
       <tr><td>05</td><td>Buscando no WhatsApp</td>
-        <td><p>Em <code>https://pastas.nufws.com.br</code>: <code>GET /api/contacts/check-exists?phone=55…</code> acha a conversa (com o 9º dígito e o ID novo do WhatsApp, via <code>/api/furtado/lids</code>).</p><p><code>GET /api/furtado/chats/{id}/messages?filter.fromMe=false&amp;downloadMedia=true</code>, 50 por vez, e baixa cada arquivo em <code>/api/files/furtado/…</code> na hora (o WAHA guarda o arquivo por 3 minutos).</p></td>
-        <td><code>whatsapp.json</code> · arquivos em <code>WhatsApp\</code> na pasta do cliente</td></tr>
+        <td><p>Em <code>https://pastas.nufws.com.br</code>: <code>GET /api/contacts/check-exists?phone=55…</code> acha a conversa (com o 9º dígito e o ID novo do WhatsApp, via <code>/api/furtado/lids</code>).</p><p><code>GET /api/furtado/chats/{id}/messages?filter.fromMe=false&amp;downloadMedia=true</code>, 50 por vez, e baixa cada arquivo em <code>/api/files/furtado/…</code> na hora (o WAHA guarda o arquivo por 3 minutos).</p><p>A conversa inteira em texto (cliente e escritório, <code>downloadMedia=false</code>) fica na pasta de trabalho para confirmar a empresa.</p></td>
+        <td><code>whatsapp.json</code> · <code>whatsapp-conversa.txt</code> · arquivos em <code>WhatsApp\</code> na pasta do cliente</td></tr>
       <tr><td>06</td><td>Transcrevendo a ligação</td>
         <td><p>Usa os <code>.txt</code>, <code>.docx</code> ou <code>.pdf</code> de transcrição da pasta, se houver; vários viram um texto só, em ordem de horário.</p><p>Senão, transcreve o áudio em português: ElevenLabs (<code>scribe_v2</code>, separa quem fala) ou OpenRouter (Voxtral, Whisper ou GPT-4o mini; WAV grande vai em partes de até 15 MB).</p></td>
         <td><code>transcricao.txt</code></td></tr>
     </tbody>
   </table>
 
-  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 21/10/2026</span><span>6 / 7</span></div>
+  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 22/10/2026</span><span>6 / 7</span></div>
 </section>
 
 <!-- ======================= PÁGINA 7 · trajeto 07 a 12 ======================= -->
 <section class="pagina">
   <div class="topo">
     <div>
-      <span class="rotulo">Trajeto técnico · etapas 07 a 12</span>
+      <span class="rotulo">Trajeto técnico · etapas 07 a 13</span>
       <h1>O que cada etapa chama</h1>
       <p class="sub">A IA nunca altera arquivos: ela só lê e responde em JSON. Quem move, junta e grava é o próprio app.</p>
     </div>
@@ -477,28 +488,31 @@
   <table class="tec">
     <thead><tr><th></th><th>Etapa</th><th>O que o app chama</th><th>Grava</th></tr></thead>
     <tbody>
-      <tr><td>07</td><td>Respondendo a entrevista</td>
-        <td>A IA recebe as perguntas e a transcrição e devolve as respostas e as "Outras perguntas feitas".</td>
-        <td><code>respostas.json</code></td></tr>
-      <tr><td>08</td><td>Gerando o PDF da entrevista</td>
-        <td>Monta o PDF no próprio PC (pdfkit), com a transcrição anexada no fim.</td>
-        <td><code>Entrevista preenchida.pdf</code></td></tr>
-      <tr><td>09</td><td>Identificando os documentos</td>
+      <tr><td>07</td><td>Identificando os documentos</td>
         <td>Manda para a IA o texto (pdfjs-dist) e a imagem das primeiras páginas de cada arquivo, em lotes de até 20, e recebe o tipo de cada um e quais são frente e verso.</td>
         <td><code>plano-movimentos.json</code></td></tr>
-      <tr><td>10</td><td>Arrumando as pastas</td>
+      <tr><td>08</td><td>Arrumando as pastas</td>
         <td><p>Junta as fotos de cada documento num PDF (pdf-lib) e move os arquivos para o padrão.</p><p>Originais vão para <code>_substituidos\</code>; a pasta <code>WhatsApp\</code> é removida quando fica vazia.</p></td>
         <td><code>movimentos.json</code> · Contratos, Documentos, Não juntar</td></tr>
-      <tr><td>11</td><td>Salvando a entrevista</td>
+      <tr><td>09</td><td>Confirmando a empresa</td>
+        <td><p>A IA recebe os dados da empresa do documento da entrevista, a transcrição, a conversa do WhatsApp e a CTPS (texto pelo pdfjs-dist; foto vira imagem), com a régua: saída há menos de 2 anos e mais de 6 meses de trabalho.</p><p>Devolve a empregadora, as descartadas, se é terceirizado e a tomadora. O app confere o CNPJ (dígitos verificadores) e monta as pendências.</p></td>
+        <td><code>empresa.json</code></td></tr>
+      <tr><td>10</td><td>Respondendo a entrevista</td>
+        <td>A IA recebe as perguntas e a transcrição e devolve as respostas e as "Outras perguntas feitas".</td>
+        <td><code>respostas.json</code></td></tr>
+      <tr><td>11</td><td>Gerando o PDF da entrevista</td>
+        <td>Monta o PDF no próprio PC (pdfkit): empresa do processo e pendências no começo, transcrição anexada no fim.</td>
+        <td><code>Entrevista preenchida.pdf</code></td></tr>
+      <tr><td>12</td><td>Salvando a entrevista</td>
         <td>Copia a entrevista preenchida para <code>Entrevista\</code> (a anterior, se houver, vai para <code>_substituidos\</code>).</td>
         <td><code>entrevista-entregue.json</code></td></tr>
-      <tr><td>12</td><td>Marcando na planilha</td>
-        <td><p>Relocaliza a linha por nome e telefone (<code>values.get</code>) e lê as opções da lista de "Pasta pronta" (<code>spreadsheets.get</code>).</p><p>Grava "Sim" (<code>values.update</code>), pinta o marcador (<code>batchUpdate · repeatCell</code>) e acrescenta a anotação em Observações. Relê a linha; se ela mudou de dono no meio, desfaz.</p></td>
+      <tr><td>13</td><td>Marcando na planilha</td>
+        <td><p>Relocaliza a linha por nome e telefone (<code>values.get</code>) e lê as opções da lista de "Pasta pronta" (<code>spreadsheets.get</code>).</p><p>Grava "Sim" (<code>values.update</code>), pinta o marcador (<code>batchUpdate · repeatCell</code>) e acrescenta a anotação em Observações, com as pendências da empresa. Relê a linha; se ela mudou de dono no meio, desfaz.</p></td>
         <td><code>planilha.json</code></td></tr>
     </tbody>
   </table>
 
-  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 21/10/2026</span><span>7 / 7</span></div>
+  <div class="rodape"><span>Organizador de pastas · Nufws Automações · fluxo de 22/10/2026</span><span>7 / 7</span></div>
 </section>
 
 </body>

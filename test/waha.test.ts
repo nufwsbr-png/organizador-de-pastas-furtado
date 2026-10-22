@@ -10,18 +10,19 @@ interface Pedido {
 const LID = '123456789@lid';
 const PN = '553197654321@c.us';
 
-type Msg = { id: string; timestamp: number; fromMe: boolean; hasMedia: boolean; media: null | { url: string | null; mimetype: string; filename: string | null; error: unknown } };
+type Msg = { id: string; timestamp: number; fromMe: boolean; hasMedia: boolean; body?: string; media: null | { url: string | null; mimetype: string; filename: string | null; error: unknown } };
 const midia = (arquivo: string, mimetype: string, filename: string | null = null) => ({ url: `http://localhost:3000/api/files/furtado/${arquivo}`, mimetype, filename, error: null });
 
 /** Conversa da cliente (mais nova primeiro, como o WAHA devolve): guardada pelo LID e, em parte, pelo número. */
 const CONVERSAS: Record<string, Msg[]> = {
   [LID]: [
-    { id: 'm7', timestamp: 1760000700, fromMe: true, hasMedia: true, media: midia('procuracao.pdf', 'application/pdf', 'Procuração.pdf') },
+    { id: 'm7', timestamp: 1760000700, fromMe: true, hasMedia: true, body: 'Segue a procuração', media: midia('procuracao.pdf', 'application/pdf', 'Procuração.pdf') },
     { id: 'm6', timestamp: 1760000600, fromMe: false, hasMedia: true, media: midia('expirado.jpg', 'image/jpeg') },
     { id: 'm5', timestamp: 1760000500, fromMe: false, hasMedia: true, media: midia('ctps.pdf', 'application/pdf', 'CTPS digital.pdf') },
     { id: 'm4', timestamp: 1760000400, fromMe: false, hasMedia: true, media: midia('figurinha.webp', 'image/webp') },
     { id: 'm3', timestamp: 1760000300, fromMe: false, hasMedia: true, media: null },
-    { id: 'm2', timestamp: 1760000200, fromMe: false, hasMedia: false, media: null },
+    { id: 'm2', timestamp: 1760000200, fromMe: false, hasMedia: false, body: 'Trabalhei na Limpa Tudo', media: null },
+    { id: 'm0', timestamp: 1760000050, fromMe: true, hasMedia: false, body: 'Bom dia! Em qual empresa você trabalhou?', media: null },
     { id: 'm1', timestamp: 1760000100, fromMe: false, hasMedia: true, media: midia('rg.jpg', 'image/jpeg', 'RG frente.jpg') },
   ],
   [PN]: [
@@ -125,6 +126,31 @@ describe('ClienteWaha', () => {
       // a URL da mídia vinha com o endereço interno do WAHA (localhost:3000) e foi trocada pelo configurado
       expect(pedidos.filter((p) => p.caminho.startsWith('/api/files/')).map((p) => p.caminho)).toContain('/api/files/furtado/rg.jpg');
       expect(pedidos.every((p) => p.chave === 'chave-certa')).toBe(true);
+    } finally {
+      servidor.close();
+    }
+  });
+
+  it('lê a conversa inteira em texto, do cliente e do escritório, em ordem e sem repetir', async () => {
+    const { url, servidor, pedidos } = await servidorFalso();
+    try {
+      const w = cliente(url);
+      const texto = await w.conversaEmTexto((await w.acharConversa('31976543210'))!);
+      expect(texto.map((m) => [m.doEscritorio ? 'escritório' : 'cliente', m.texto])).toEqual([
+        ['escritório', 'Bom dia! Em qual empresa você trabalhou?'],
+        ['cliente', '[arquivo]'],
+        ['cliente', 'Trabalhei na Limpa Tudo'],
+        ['cliente', '[arquivo]'],
+        ['cliente', '[arquivo]'],
+        ['cliente', '[arquivo]'],
+        ['cliente', '[arquivo]'],
+        ['escritório', '[arquivo] Segue a procuração'],
+        ['cliente', '[arquivo]'],
+      ]);
+      const listagens = pedidos.filter((p) => p.caminho.endsWith('/messages'));
+      // as duas pontas da conversa, sem baixar arquivo nenhum
+      expect(listagens.every((p) => p.params.get('filter.fromMe') === null && p.params.get('downloadMedia') === 'false')).toBe(true);
+      expect(pedidos.some((p) => p.caminho.startsWith('/api/files/'))).toBe(false);
     } finally {
       servidor.close();
     }

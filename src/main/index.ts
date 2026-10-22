@@ -5,6 +5,7 @@ import { Atualizador, type EstadoAtualizacao } from './atualizador';
 import { Config, type Ajustes } from './config';
 import { etapaClassificar } from './etapas/classificar';
 import { etapaCliente } from './etapas/cliente';
+import { etapaEmpresa } from './etapas/empresa';
 import { etapaEntregarEntrevista } from './etapas/entregar-entrevista';
 import { inventariar } from './etapas/inventario';
 import { etapaMover } from './etapas/mover';
@@ -113,10 +114,12 @@ function montarEtapas(): Etapa[] {
       transcrever: (arquivo, chave) =>
         porOpenRouter() ? transcreverOpenRouter(arquivo, chave, { modelo: config.obter().modeloOpenRouter }) : transcreverElevenLabs(arquivo, chave),
     }),
-    etapaRespostas(provedorAtual),
-    etapaPdfEntrevista(),
+    // os documentos são arrumados antes da entrevista: a empresa é confirmada na CTPS já no lugar
     etapaClassificar(provedorAtual),
     etapaMover(),
+    etapaEmpresa(provedorAtual),
+    etapaRespostas(provedorAtual),
+    etapaPdfEntrevista(),
     etapaEntregarEntrevista(),
     etapaPlanilha(planilha),
   ];

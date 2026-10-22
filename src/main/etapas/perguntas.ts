@@ -20,9 +20,13 @@ export interface DadosCliente {
   nome?: string;
   telefone?: string;
   empresa?: string;
+  cnpjEmpresa?: string;
+  enderecoEmpresa?: string;
   cargo?: string;
   vinculo?: string;
   salario?: string;
+  admissao?: string;
+  demissao?: string;
 }
 
 export const SCHEMA_PERGUNTAS = {
@@ -49,9 +53,13 @@ export const SCHEMA_PERGUNTAS = {
         nome: { type: 'string' },
         telefone: { type: 'string' },
         empresa: { type: 'string' },
+        cnpjEmpresa: { type: 'string' },
+        enderecoEmpresa: { type: 'string' },
         cargo: { type: 'string' },
         vinculo: { type: 'string' },
         salario: { type: 'string' },
+        admissao: { type: 'string' },
+        demissao: { type: 'string' },
       },
       additionalProperties: false,
     },

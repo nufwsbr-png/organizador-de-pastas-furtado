@@ -10,7 +10,7 @@ interface Props {
   aoMudar: () => Promise<unknown>;
 }
 
-const ETAPAS = ['inventario', 'perguntas', 'zapsign', 'cliente', 'whatsapp', 'transcricao', 'respostas', 'pdf-entrevista', 'classificar', 'mover', 'entregar-entrevista', 'planilha'];
+const ETAPAS = ['inventario', 'perguntas', 'zapsign', 'cliente', 'whatsapp', 'transcricao', 'classificar', 'mover', 'empresa', 'respostas', 'pdf-entrevista', 'entregar-entrevista', 'planilha'];
 const NOME_ETAPA: Record<string, string> = {
   inventario: 'Lendo a pasta',
   perguntas: 'Lendo a entrevista',
@@ -22,6 +22,7 @@ const NOME_ETAPA: Record<string, string> = {
   'pdf-entrevista': 'Gerando o PDF da entrevista',
   classificar: 'Identificando os documentos',
   mover: 'Arrumando as pastas',
+  empresa: 'Confirmando a empresa',
   'entregar-entrevista': 'Salvando a entrevista',
   planilha: 'Marcando na planilha',
 };
