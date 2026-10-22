@@ -3,6 +3,14 @@ import { api, type Ajustes as AjustesApp, type EstadoApp } from './api';
 import { Simbolo } from './Simbolo';
 
 const NOME_TEMA: Record<AjustesApp['tema'], string> = { sistema: 'Igual ao Windows', claro: 'Claro', escuro: 'Noturno' };
+type ServicoTranscricao = AjustesApp['transcricao'];
+const NOME_SERVICO: Record<ServicoTranscricao, string> = { elevenlabs: 'ElevenLabs', openrouter: 'OpenRouter' };
+/** Modelos do OpenRouter, com o que se viu na ligação de 18 min usada no teste (22/10/2026). */
+const MODELOS: Record<AjustesApp['modeloOpenRouter'], { nome: string; nota: string }> = {
+  'mistralai/voxtral-mini-transcribe': { nome: 'Voxtral', nota: 'o mais fiel, com a hora de cada fala e sem frases inventadas (cerca de US$ 0,025 por ligação de 18 min)' },
+  'openai/whisper-large-v3-turbo': { nome: 'Whisper', nota: 'o mais barato (cerca de US$ 0,002 por ligação), mas inventa "Obrigado." e "Tchau." nas pausas' },
+  'openai/gpt-4o-mini-transcribe': { nome: 'GPT-4o mini', nota: 'texto limpo, mas em blocos, sem a hora de cada fala (cerca de US$ 0,018 por ligação)' },
+};
 
 interface Props {
   estado: EstadoApp;
@@ -12,6 +20,8 @@ interface Props {
 
 interface PropsSegredo {
   titulo: string;
+  /** Aparece logo abaixo do título (ex.: seletor do serviço). */
+  cabecalho?: ReactNode;
   children: ReactNode;
   /** Valor atual mascarado (ou null se não há). */
   atual: string | null;
@@ -39,13 +49,14 @@ function useAcao() {
 }
 
 /** Chave/token guardado no .env do app: colar, testar e apagar. */
-function Segredo({ titulo, children, atual, placeholder, salvar, testar, aoMudar }: PropsSegredo) {
+function Segredo({ titulo, cabecalho, children, atual, placeholder, salvar, testar, aoMudar }: PropsSegredo) {
   const [valor, setValor] = useState('');
   const { resultado, ocupado, agir } = useAcao();
 
   return (
     <section>
       <h2>{titulo}</h2>
+      {cabecalho}
       <p className="sub">
         {children} {atual ? `Atual: ${atual}` : 'Nada salvo ainda.'}
       </p>
@@ -187,6 +198,8 @@ function SecaoPlanilha({ estado, aoMudar }: Omit<Props, 'aoVoltar'>) {
 
 export function Ajustes({ estado, aoVoltar, aoMudar }: Props) {
   const a = estado.atualizacao;
+  const servico = estado.ajustes.transcricao;
+  const modelo = estado.ajustes.modeloOpenRouter;
 
   return (
     <div className="tela-ajustes">
@@ -216,14 +229,47 @@ export function Ajustes({ estado, aoVoltar, aoMudar }: Props) {
         <SecaoPlanilha estado={estado} aoMudar={aoMudar} />
 
         <Segredo
-          titulo="Transcrição (ElevenLabs)"
-          atual={estado.chaveElevenLabs}
-          placeholder="Cole a chave da API do ElevenLabs"
-          salvar={api.ajustes.chave}
-          testar={api.ajustes.testarChave}
+          key={servico}
+          titulo="Transcrição"
+          cabecalho={
+            <>
+              <div className="linha">
+                <div className="segmentos" role="radiogroup" aria-label="Serviço de transcrição">
+                  {(Object.keys(NOME_SERVICO) as ServicoTranscricao[]).map((s) => (
+                    <button key={s} role="radio" aria-checked={servico === s} className={servico === s ? 'escolhido' : ''} onClick={() => api.ajustes.definir({ transcricao: s }).then(aoMudar)}>
+                      {NOME_SERVICO[s]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {servico === 'openrouter' && (
+                <div className="linha">
+                  <span className="sub">Modelo</span>
+                  <div className="segmentos" role="radiogroup" aria-label="Modelo do OpenRouter">
+                    {(Object.keys(MODELOS) as AjustesApp['modeloOpenRouter'][]).map((m) => (
+                      <button key={m} role="radio" aria-checked={modelo === m} title={m} className={modelo === m ? 'escolhido' : ''} onClick={() => api.ajustes.definir({ modeloOpenRouter: m }).then(aoMudar)}>
+                        {MODELOS[m].nome}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          }
+          atual={servico === 'openrouter' ? estado.chaveOpenRouter : estado.chaveElevenLabs}
+          placeholder={`Cole a chave da API do ${NOME_SERVICO[servico]}`}
+          salvar={servico === 'openrouter' ? api.ajustes.chaveOpenRouter : api.ajustes.chave}
+          testar={servico === 'openrouter' ? api.ajustes.testarOpenRouter : api.ajustes.testarChave}
           aoMudar={aoMudar}
         >
-          Chave da API do ElevenLabs, usada para transcrever o áudio da ligação. Fica em <code>{estado.arquivoEnv}</code>.
+          {servico === 'openrouter' ? (
+            <>
+              Chave da API do OpenRouter. Modelo <code>{modelo}</code>: {MODELOS[modelo].nota}. Nenhum modelo do OpenRouter separa quem fala.
+            </>
+          ) : (
+            <>Chave da API do ElevenLabs (Scribe). Transcreve o áudio da ligação separando quem fala (Falante 1, Falante 2).</>
+          )}{' '}
+          Fica em <code>{estado.arquivoEnv}</code>.
         </Segredo>
 
         <section>

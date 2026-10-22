@@ -3,6 +3,8 @@ import { join } from 'node:path';
 
 export type Provedor = 'claude' | 'codex';
 export type Tema = 'sistema' | 'claro' | 'escuro';
+export type ServicoTranscricao = 'elevenlabs' | 'openrouter';
+export type ModeloOpenRouter = 'mistralai/voxtral-mini-transcribe' | 'openai/whisper-large-v3-turbo' | 'openai/gpt-4o-mini-transcribe';
 
 export interface Ajustes {
   /** Provedor de IA escolhido na tela de login. */
@@ -17,10 +19,25 @@ export interface Ajustes {
   planilhaAba: string;
   /** Modo claro, noturno ou igual ao Windows. */
   tema: Tema;
+  /** Quem transcreve o áudio da ligação: ElevenLabs (separa quem fala) ou Whisper pelo OpenRouter. */
+  transcricao: ServicoTranscricao;
+  /** Modelo do OpenRouter (comparados numa ligação real em 22/10/2026: o Voxtral foi o mais fiel). */
+  modeloOpenRouter: ModeloOpenRouter;
 }
 
-const PADRAO: Ajustes = { provedor: null, paralelismo: 3, wahaUrl: '', wahaSessao: 'furtado', planilhaId: '', planilhaAba: 'Lançamentos', tema: 'sistema' };
+const PADRAO: Ajustes = {
+  provedor: null,
+  paralelismo: 3,
+  wahaUrl: '',
+  wahaSessao: 'furtado',
+  planilhaId: '',
+  planilhaAba: 'Lançamentos',
+  tema: 'sistema',
+  transcricao: 'elevenlabs',
+  modeloOpenRouter: 'mistralai/voxtral-mini-transcribe',
+};
 const CHAVE_ELEVENLABS = 'ELEVENLABS_API_KEY';
+const CHAVE_OPENROUTER = 'OPENROUTER_API_KEY';
 const TOKEN_ZAPSIGN = 'ZAPSIGN_API_TOKEN';
 const CHAVE_WAHA = 'WAHA_API_KEY';
 const CONTA_SERVICO = 'GOOGLE_SERVICE_ACCOUNT_JSON_BASE64';
@@ -74,6 +91,14 @@ export class Config {
 
   definirChaveElevenLabs(chave: string): void {
     this.definirSegredo(CHAVE_ELEVENLABS, chave);
+  }
+
+  chaveOpenRouter(): string | null {
+    return this.segredo(CHAVE_OPENROUTER);
+  }
+
+  definirChaveOpenRouter(chave: string): void {
+    this.definirSegredo(CHAVE_OPENROUTER, chave);
   }
 
   tokenZapsign(): string | null {

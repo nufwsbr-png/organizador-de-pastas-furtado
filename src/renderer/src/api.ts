@@ -11,6 +11,7 @@ export interface EstadoApp {
   jobs: Job[];
   versao: string;
   chaveElevenLabs: string | null;
+  chaveOpenRouter: string | null;
   tokenZapsign: string | null;
   chaveWaha: string | null;
   /** E-mail da conta de serviço do Google (quem precisa ser Editor da planilha). */
@@ -45,6 +46,8 @@ export interface ApiTipada {
     definir: (mudancas: Partial<Ajustes>) => Promise<Ajustes>;
     chave: (chave: string) => Promise<string | null>;
     testarChave: () => Promise<{ ok: boolean; mensagem: string }>;
+    chaveOpenRouter: (chave: string) => Promise<string | null>;
+    testarOpenRouter: () => Promise<{ ok: boolean; mensagem: string }>;
     tokenZapsign: (token: string) => Promise<string | null>;
     testarZapsign: () => Promise<{ ok: boolean; mensagem: string }>;
     chaveWaha: (chave: string) => Promise<string | null>;

@@ -6,11 +6,11 @@ import { lerDocumentoTexto } from '../ferramentas/texto';
 import type { Inventario } from './inventario';
 
 export const MENSAGEM_SEM_TRANSCRICAO =
-  'Para preencher a entrevista, precisa da transcrição da ligação ou de uma API de transcrição (ElevenLabs). ' +
-  'Coloque na pasta do cliente um arquivo com a transcrição (txt, docx ou pdf, com "Transcrição" no nome) ou a chave do ElevenLabs em Ajustes e clique em Organizar de novo.';
+  'Para preencher a entrevista, precisa da transcrição da ligação ou de uma API de transcrição (ElevenLabs ou OpenRouter). ' +
+  'Coloque na pasta do cliente um arquivo com a transcrição (txt, docx ou pdf, com "Transcrição" no nome) ou a chave em Ajustes > Transcrição e clique em Organizar de novo.';
 
 export interface DepsTranscricao {
-  /** Chave do ElevenLabs no momento da execução (null = não configurada). */
+  /** Chave do serviço de transcrição escolhido, no momento da execução (null = não configurada). */
   chave: () => string | null;
   transcrever: (arquivo: string, chave: string) => Promise<string>;
 }

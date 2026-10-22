@@ -114,11 +114,12 @@ export function Principal({ estado, aoAjustes, aoTrocarLogin, aoMudar }: Props) 
   // cliente não confirmado na planilha, ou conversa não achada com o telefone dela
   const dadosPendentes =
     job !== null && !ocupado(job) && planilhaPronta && (job.etapasPendentes.includes('cliente') || (wahaPronto && job.etapasPendentes.includes('whatsapp')));
+  const transcricao = estado.ajustes.transcricao === 'openrouter' ? { nome: 'OpenRouter', chave: estado.chaveOpenRouter } : { nome: 'ElevenLabs', chave: estado.chaveElevenLabs };
   const indicadores = [
     { nome: 'ZapSign', ok: Boolean(estado.tokenZapsign), falta: 'Sem token do ZapSign: os assinados não serão puxados' },
     { nome: 'WhatsApp', ok: wahaPronto, falta: 'Sem WAHA: os documentos do WhatsApp não serão puxados' },
     { nome: 'Planilha', ok: planilhaPronta, falta: 'Sem planilha: o cliente não é confirmado nem marcado como Pasta pronta' },
-    { nome: 'ElevenLabs', ok: Boolean(estado.chaveElevenLabs), falta: 'Sem chave do ElevenLabs: a entrevista não é transcrita' },
+    { nome: transcricao.nome, ok: Boolean(transcricao.chave), falta: `Sem chave do ${transcricao.nome}: o áudio da ligação não é transcrito` },
   ];
 
   return (

@@ -39,6 +39,22 @@ describe('Config', () => {
     expect(cfg.chaveElevenLabs()).toBe('nova');
   });
 
+  it('transcrição começa no ElevenLabs; a chave do OpenRouter fica no .env ao lado da do ElevenLabs', () => {
+    const d = dir();
+    const cfg = new Config(d);
+    expect(cfg.obter().transcricao).toBe('elevenlabs');
+    expect(cfg.obter().modeloOpenRouter).toBe('mistralai/voxtral-mini-transcribe');
+    cfg.definirChaveElevenLabs('el');
+    cfg.definirChaveOpenRouter(' sk-or-1 ');
+    cfg.definir({ transcricao: 'openrouter' });
+    const texto = readFileSync(join(d, '.env'), 'utf8');
+    expect(texto).toContain('ELEVENLABS_API_KEY=el');
+    expect(texto).toContain('OPENROUTER_API_KEY=sk-or-1');
+    const outra = new Config(d);
+    expect(outra.chaveOpenRouter()).toBe('sk-or-1');
+    expect(outra.obter().transcricao).toBe('openrouter');
+  });
+
   it('uma chave vazia apaga a chave', () => {
     const d = dir();
     const cfg = new Config(d);

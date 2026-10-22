@@ -84,7 +84,7 @@ describe('padrão da pasta do cliente', () => {
 
 describe('data e hora no nome do arquivo', () => {
   it('lê dia-mês-ano e a hora em vários jeitos', () => {
-    expect(momentoNoNome('Transcricao - 19-10-2026 - 16h45 - Gustavo Castelli.txt')).toBe('2026-10-19 16:45');
+    expect(momentoNoNome('Transcricao - 19-10-2026 - 16h45 - Carla Souza.txt')).toBe('2026-10-19 16:45');
     expect(momentoNoNome('ligacao 2026-10-19 09.05.wav')).toBe('2026-10-19 09:05');
     expect(momentoNoNome('Transcrição.txt')).toBeNull();
   });

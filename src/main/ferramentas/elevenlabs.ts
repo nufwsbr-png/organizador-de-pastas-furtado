@@ -23,7 +23,8 @@ export interface OpcoesElevenLabs {
   idioma?: string;
 }
 
-function tempo(segundos: number): string {
+/** "mm:ss" a partir de segundos (minutos passam de 59 em ligação longa). */
+export function tempo(segundos: number): string {
   const total = Math.max(0, Math.floor(segundos));
   const m = Math.floor(total / 60);
   const s = total % 60;

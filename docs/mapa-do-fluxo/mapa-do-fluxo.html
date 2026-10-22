@@ -240,7 +240,7 @@
       <div class="notas-card"><p class="nota"><span>Pula</span> se já tem RG ou CNH, CTPS e comprovante.</p><p class="nota"><span>Para</span> se não achar a conversa.</p></div>
     </div>
     <div class="card">
-      <div class="cab"><span class="n">06</span><span class="fonte">ElevenLabs</span></div>
+      <div class="cab"><span class="n">06</span><span class="fonte">ElevenLabs ou OpenRouter</span></div>
       <h3>Transcrevendo a ligação</h3>
       <p>Usa as transcrições que vieram na pasta (todas, em ordem de horário) ou transcreve o áudio.</p>
       <div class="notas-card"><p class="nota"><span>Para</span> sem transcrição e sem a chave. O resto da pasta segue.</p></div>
@@ -353,7 +353,7 @@
       <tr><td>Buscando no ZapSign</td><td>Nome diferente no ZapSign, envelope ainda não assinado ou dois clientes parecidos.</td><td>Informe o nome, o e-mail ou o link do documento no ZapSign.</td></tr>
       <tr><td>Confirmando o cliente</td><td>Não está na planilha, o nome se repete ou o telefone é diferente do usado no ZapSign.</td><td>Preencha a caixa <b>Dados do cliente</b> com nome e telefone.</td></tr>
       <tr><td>Buscando no WhatsApp</td><td>Não há conversa com esse telefone no WhatsApp do escritório.</td><td>Confira o telefone na planilha ou informe outro em Dados do cliente.</td></tr>
-      <tr><td>Transcrevendo a ligação</td><td>Sem transcrição na pasta e sem a chave do ElevenLabs.</td><td>Coloque o arquivo da transcrição na pasta ou a chave em Ajustes.</td></tr>
+      <tr><td>Transcrevendo a ligação</td><td>Sem transcrição na pasta e sem a chave do serviço de transcrição.</td><td>Coloque o arquivo da transcrição na pasta ou a chave em Ajustes.</td></tr>
       <tr><td>Marcando na planilha</td><td>Falta algum documento ou alguma etapa ficou pendente; ou a linha está "Não".</td><td>Resolva o que a tela lista. "Não" fica como está: é decisão da equipe.</td></tr>
     </tbody>
   </table>
@@ -365,7 +365,7 @@
       <div class="item"><b>ZapSign</b><p>Documentos assinados do cliente.</p></div>
       <div class="item"><b>WhatsApp</b><p>O do escritório, pelo WAHA na VPS (pastas.nufws.com.br).</p></div>
       <div class="item"><b>Planilha do Google</b><p>Contratos/Entrevistas/Pastas.</p></div>
-      <div class="item"><b>ElevenLabs</b><p>Transcrição do áudio da ligação.</p></div>
+      <div class="item"><b>ElevenLabs ou OpenRouter</b><p>Transcrição do áudio da ligação (escolha em Ajustes).</p></div>
     </div>
   </div>
 
@@ -410,8 +410,8 @@
         <p>Conta de serviço do Google em <code>GOOGLE_SERVICE_ACCOUNT_JSON_BASE64</code>, editora da planilha.</p>
       </div>
       <div class="servico">
-        <div class="tit"><b>ElevenLabs</b><span class="mono">https://api.elevenlabs.io/v1/speech-to-text</span></div>
-        <p>Cabeçalho <code>xi-api-key</code> com a <code>ELEVENLABS_API_KEY</code>; modelo <code>scribe_v2</code>.</p>
+        <div class="tit"><b>Transcrição</b><span>ElevenLabs ou OpenRouter, escolha em Ajustes</span></div>
+        <p><code>api.elevenlabs.io/v1/speech-to-text</code> com a <code>ELEVENLABS_API_KEY</code> (<code>scribe_v2</code>), ou <code>openrouter.ai/api/v1/audio/transcriptions</code> com a <code>OPENROUTER_API_KEY</code> (Voxtral, Whisper ou GPT-4o mini).</p>
       </div>
       <div class="servico">
         <div class="tit"><b>IA</b><span>Anthropic (Claude) ou OpenAI (ChatGPT)</span></div>
@@ -456,7 +456,7 @@
         <td><p>Em <code>https://pastas.nufws.com.br</code>: <code>GET /api/contacts/check-exists?phone=55…</code> acha a conversa (com o 9º dígito e o ID novo do WhatsApp, via <code>/api/furtado/lids</code>).</p><p><code>GET /api/furtado/chats/{id}/messages?filter.fromMe=false&amp;downloadMedia=true</code>, 50 por vez, e baixa cada arquivo em <code>/api/files/furtado/…</code> na hora (o WAHA guarda o arquivo por 3 minutos).</p></td>
         <td><code>whatsapp.json</code> · arquivos em <code>WhatsApp\</code> na pasta do cliente</td></tr>
       <tr><td>06</td><td>Transcrevendo a ligação</td>
-        <td><p>Usa os <code>.txt</code>, <code>.docx</code> ou <code>.pdf</code> de transcrição da pasta, se houver; vários viram um texto só, em ordem de horário.</p><p>Senão, <code>POST https://api.elevenlabs.io/v1/speech-to-text</code> com o áudio (modelo <code>scribe_v2</code>, português).</p></td>
+        <td><p>Usa os <code>.txt</code>, <code>.docx</code> ou <code>.pdf</code> de transcrição da pasta, se houver; vários viram um texto só, em ordem de horário.</p><p>Senão, transcreve o áudio em português: ElevenLabs (<code>scribe_v2</code>, separa quem fala) ou OpenRouter (Voxtral, Whisper ou GPT-4o mini; WAV grande vai em partes de até 15 MB).</p></td>
         <td><code>transcricao.txt</code></td></tr>
     </tbody>
   </table>

@@ -16,6 +16,7 @@ import { etapaTranscricao } from './etapas/transcricao';
 import { etapaWhatsapp } from './etapas/whatsapp';
 import { etapaZapsign } from './etapas/zapsign';
 import { transcreverElevenLabs } from './ferramentas/elevenlabs';
+import { testarChaveOpenRouter, transcreverOpenRouter } from './ferramentas/openrouter';
 import { apiGoogle, ClientePlanilha, idDaPlanilha } from './ferramentas/planilha';
 import { ClienteWaha } from './ferramentas/waha';
 import { ClienteZapsign } from './ferramentas/zapsign';
@@ -97,6 +98,8 @@ function etapaInventario(): Etapa {
   };
 }
 
+const porOpenRouter = () => config.obter().transcricao === 'openrouter';
+
 function montarEtapas(): Etapa[] {
   return [
     etapaInventario(),
@@ -105,7 +108,11 @@ function montarEtapas(): Etapa[] {
     etapaZapsign(() => (config.tokenZapsign() ? zapsign : null)),
     etapaCliente({ planilha, zapsign: () => (config.tokenZapsign() ? zapsign : null) }),
     etapaWhatsapp(() => (wahaConfigurado() ? waha : null)),
-    etapaTranscricao({ chave: () => config.chaveElevenLabs(), transcrever: (arquivo, chave) => transcreverElevenLabs(arquivo, chave) }),
+    etapaTranscricao({
+      chave: () => (porOpenRouter() ? config.chaveOpenRouter() : config.chaveElevenLabs()),
+      transcrever: (arquivo, chave) =>
+        porOpenRouter() ? transcreverOpenRouter(arquivo, chave, { modelo: config.obter().modeloOpenRouter }) : transcreverElevenLabs(arquivo, chave),
+    }),
     etapaRespostas(provedorAtual),
     etapaPdfEntrevista(),
     etapaClassificar(provedorAtual),
@@ -192,6 +199,7 @@ function estado() {
     jobs: orquestrador.jobs(),
     versao: app.getVersion(),
     chaveElevenLabs: mascarar(config.chaveElevenLabs()),
+    chaveOpenRouter: mascarar(config.chaveOpenRouter()),
     tokenZapsign: mascarar(config.tokenZapsign()),
     chaveWaha: mascarar(config.chaveWaha()),
     contaServico: config.contaServico()?.email ?? null,
@@ -278,6 +286,14 @@ function registrarIpc(): void {
     } catch (erro) {
       return { ok: false, mensagem: `Não consegui falar com o ElevenLabs: ${erro instanceof Error ? erro.message : String(erro)}` };
     }
+  });
+  ipcMain.handle('ajustes:chaveOpenRouter', (_e, chave: string) => {
+    config.definirChaveOpenRouter(chave);
+    return mascarar(config.chaveOpenRouter());
+  });
+  ipcMain.handle('ajustes:testarOpenRouter', async () => {
+    const chave = config.chaveOpenRouter();
+    return chave ? testarChaveOpenRouter(chave) : { ok: false, mensagem: 'Nenhuma chave salva.' };
   });
   ipcMain.handle('ajustes:tokenZapsign', (_e, token: string) => {
     config.definirTokenZapsign(token);
